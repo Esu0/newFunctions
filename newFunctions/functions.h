@@ -21,8 +21,9 @@ namespace MyFunctions1
 		void addabs(const LongInt&, LongInt&)const&;
 		void subtractabs(const LongInt&, LongInt&)const&;//*this-num2>=0の前提
 		bool cmpabs(const LongInt&)const&;
+		
 	public:
-
+		void multiplyabs(long long, LongInt&)const&;
 		LongInt()noexcept;//デフォルトコンストラクタ
 		LongInt(int);//コンストラクタint
 		LongInt(std::size_t, bool);
@@ -42,9 +43,11 @@ namespace MyFunctions1
 		bool operator<=(const LongInt&)const&;
 		bool operator>=(const LongInt&)const&;
 
-		LongInt operator+(const LongInt&)const&;
-		LongInt operator-(const LongInt&)const&;
-		
+		LongInt operator+(const LongInt&)const&;//加算
+		LongInt operator-(const LongInt&)const&;//減算
+		LongInt operator*(const LongInt&)const&;//乗算
+		LongInt operator/(const LongInt&)const&;//除算
+		LongInt operator%(const LongInt&)const&;//モジュル演算
 
 		byte operator[](std::size_t)const&;
 

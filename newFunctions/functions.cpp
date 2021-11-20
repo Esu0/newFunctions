@@ -1,6 +1,7 @@
 #include"functions.h"
 
 using namespace MyFunctions1;
+#define MULTI_DNUM 4
 
 LongInt::LongInt()noexcept:data{}, sign{ 0 }
 {}
@@ -216,6 +217,48 @@ bool LongInt::cmpabs(const LongInt& num2)const&
 	else return digit_num > num2.digit_num;
 }
 
+void LongInt::multiplyabs(long long num, LongInt& result)const&
+{
+	constexpr byte dnum = 12;
+	std::size_t i;
+	static std::vector<std::vector<byte>> addnum(dnum, std::vector<byte>(dnum + 1, 0));
+	byte addnumhead = 0, j;
+
+	long long tmp;
+
+	for (i = 0; i < digit_num; ++i)
+	{
+		tmp = num * data[i];
+		for (j = 0; j < dnum; ++j)
+		{
+			addnum[(addnumhead + j) % dnum][j] = (byte)(tmp % 10);
+			tmp /= 10;
+		}
+		for (j = 0; j <= dnum; ++j)
+		{
+			result.data[i] += addnum[addnumhead][j];
+			addnum[addnumhead][j] = 0;
+		}
+		addnumhead++;
+		addnumhead %= dnum;
+		addnum[addnumhead][dnum] = result.data[i] / (byte)10;
+		result.data[i] %= (byte)10;
+	}
+
+	for (byte cnt = 0; cnt < dnum - 1; ++cnt)
+	{
+		for (j = 0; j <= dnum; ++j)
+		{
+			result.data[i + cnt] += addnum[addnumhead][j];
+		}
+		addnumhead++;
+		addnumhead %= dnum;
+		addnum[addnumhead][dnum] = result.data[i + cnt] / (byte)10;
+		result.data[i + cnt] %= (byte)10;
+		if (result.data[i + cnt] != 0)result.digit_num = i + cnt + 1;
+	}
+}
+
 unsigned char LongInt::operator[](std::size_t index)const&
 {
 	return index < data.size() ? data[index] : 0;
@@ -271,6 +314,11 @@ LongInt LongInt::operator-(const LongInt& num)const&
 	return answer;
 }
 
+LongInt LongInt::operator*(const LongInt& num)const&
+{
+	LongInt answer;
+	return answer;
+}
 std::ostream& operator<<(std::ostream& output, const MyFunctions1::LongInt& numout)
 {
 	std::string tmp;

@@ -9,10 +9,12 @@ using std::chrono::system_clock;
 int main()
 {
 	system_clock::time_point start, end;
-	LongInt a, b, c;
-	a.random(200000);
-	b.random(200000);
+	LongInt a, b, c(20, true);
+	a.random(5);
+	b.random(20);
 
+	a.multiplyabs(23793000000, c);
+	cout << a << " * " << 23793000000 << " = " << c << endl;
 	start = system_clock::now();
 
 	c = a + b;
