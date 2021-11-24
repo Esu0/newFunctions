@@ -46,7 +46,7 @@ namespace MyFunctions1
 		LongInt operator+(const LongInt&)const&;//‰ÁZ
 		LongInt operator-(const LongInt&)const&;//Œ¸Z
 		LongInt operator*(const LongInt&)const&;//æZ
-		LongInt operator/(const LongInt&)const&;//œZ
+		LongInt operator/(const LongInt&)const&;//œZ §ì“r’†
 		LongInt operator%(const LongInt&)const&;//ƒ‚ƒWƒ…ƒ‹‰‰Z
 
 		byte operator[](std::size_t)const&;

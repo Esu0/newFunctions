@@ -316,7 +316,49 @@ LongInt LongInt::operator-(const LongInt& num)const&
 
 LongInt LongInt::operator*(const LongInt& num)const&
 {
-	LongInt answer;
+	LongInt answer(digit_num + num.digit_num, true);
+	std::size_t j;
+	byte carry;
+	for (std::size_t i = 0; i < num.digit_num; ++i)
+	{
+		carry = 0;
+		for (j = 0; j < digit_num; ++j)
+		{
+			answer.data[i + j] += num.data[i] * data[j] + carry;
+			carry = answer.data[i + j] / 10;
+			answer.data[i + j] %= 10;
+		}
+		answer.data[i + j] = carry;
+	}
+	answer.sign = sign ^ num.sign;
+	answer.digit_num = carry == 0 ? answer.data.size() - 1 : answer.data.size();
+	return answer;
+}
+
+//“r’†
+LongInt LongInt::operator/(const LongInt& num2)const&
+{
+	LongInt answer(digit_num - num2.digit_num + 1, true);
+	LongInt r = *this;
+	byte multi = 0, pivot = num2.data[num2.digit_num - 1];
+	byte brw = 0;
+	signed short tmp;
+	for (std::size_t i = digit_num - num2.digit_num + 1; i <= 0;)
+	{
+		--i;
+		multi = (r[i + num2.digit_num] * 10 + r.data[i + num2.digit_num - 1]) / (pivot + 1);
+		if (multi != 0)
+		{
+			for (std::size_t j = 0; j < num2.digit_num; ++j)
+			{
+				tmp = (short)r[j + i] - (short)(num2[j] * multi);
+			}
+		}
+		for (std::size_t j = num2.digit_num; j <= 0;)
+		{
+			--j;
+		}
+	}
 	return answer;
 }
 std::ostream& operator<<(std::ostream& output, const MyFunctions1::LongInt& numout)
