@@ -31,7 +31,7 @@ namespace MyFunctions1
 		LongInt(const char*);//コンストラクタchar*
 		LongInt(const LongInt&) = default;//コピーコンストラクタ
 		LongInt(LongInt&&) = default;//ムーブコンストラクタ
-		
+
 		virtual ~LongInt() = default;
 
 		LongInt& operator=(const LongInt&)& = default;
@@ -47,6 +47,9 @@ namespace MyFunctions1
 		LongInt operator++(int)&;
 		LongInt& operator--()&;
 		LongInt operator--(int)&;
+
+		LongInt operator+()const&;
+		LongInt operator-()const&;
 
 		LongInt operator+(const LongInt&)const&;//加算
 		LongInt operator-(const LongInt&)const&;//減算
@@ -85,6 +88,11 @@ namespace MyFunctions1
 		static LongInt zero()
 		{
 			return LongInt();
+		}
+
+		void absolute()&
+		{
+			sign = 0;
 		}
 
 		void tostring(std::string&)const&;

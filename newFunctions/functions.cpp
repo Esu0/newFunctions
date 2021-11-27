@@ -49,12 +49,12 @@ LongInt::LongInt(const char* snum):data{}, sign{0}
 	if (data.empty())
 	{
 		data.push_back(0);
-		digit_num = 0;
+		digit_num = 1;
 	}
 	else
 	{
 		digit_num = data.size() - 1;
-		while (data[digit_num] == 0 && --digit_num != 0);
+		while (data[digit_num] == 0 && digit_num != 0 && --digit_num != 0);
 		++digit_num;
 	}
 }
@@ -358,6 +358,18 @@ LongInt LongInt::operator--(int)&
 	return tmp;
 }
 
+LongInt LongInt::operator+()const&
+{
+	return *this;
+}
+
+LongInt LongInt::operator-()const&
+{
+	LongInt tmp = *this;
+	if (!(tmp.digit_num == 1 && tmp.data[0] == 0))tmp.sign = true;
+	return tmp;
+}
+
 LongInt LongInt::operator+(const LongInt& num)const&
 {
 	LongInt answer((std::max)(digit_num, num.digit_num) + 1, true);
@@ -389,7 +401,7 @@ LongInt& LongInt::operator+=(const LongInt& num)&
 	{
 		std::size_t i;
 		byte carry = 0;
-		for (i = 0; i < data.size(); ++i)
+		for (i = 0; i < digit_num; ++i)
 		{
 			if (i >= num.digit_num)
 			{
@@ -400,23 +412,122 @@ LongInt& LongInt::operator+=(const LongInt& num)&
 					carry = 1;
 					continue;
 				}
-				else break;
+				else
+				{
+					carry = 0;
+					++i;
+					goto additionEnd;
+				}
 			}
 			data[i] += num.data[i] + carry;
-			data[i] %= 10;
 			carry = data[i] / 10;
+			data[i] %= 10;
+		}
+		for (; i < data.size(); ++i)
+		{
+			if (i >= num.digit_num)
+			{
+				data[i] = carry;
+				digit_num += carry;
+				carry = 0;
+				break;
+			}
+			data[i] += num.data[i] + carry;
+			carry = data[i] / 10;
+			data[i] %= 10;
+			++digit_num;
 		}
 		for (; i < num.digit_num; ++i)
 		{
 			data.push_back(num[i] + carry);
-			data[i] %= 10;
 			carry = data[i] / 10;
+			data[i] %= 10;
+			++digit_num;
+		}
+	additionEnd:
+		if (carry)
+		{
+			if (i >= data.size())data.push_back(1);
+			else data[i] = 1;
+			++digit_num;
 		}
 	}
 	else
 	{
-		byte cmpresult;
-		
+		signed char cmpresult = 0;
+		byte brw = 0;
+		std::size_t i;
+		if (digit_num == num.digit_num)
+		{
+			for (i = digit_num; i > 0;)
+			{
+				--i;
+				if (data[i] != num.data[i])
+				{
+					cmpresult = data[i] > num.data[i] ? 1 : -1;
+					break;
+				}
+			}
+		}
+		else cmpresult = digit_num > num.digit_num ? 1 : -1;
+		if (!cmpresult)*this = LongInt();
+		else if (cmpresult == 1)
+		{
+			for (i = 0; i < num.digit_num; ++i)
+			{
+				data[i] += 10 - num.data[i] - brw;
+				brw = (data[i] / 10) ? 0 : 1;
+				data[i] %= 10;
+			}
+			if (brw)
+			{
+				for (; i < digit_num; ++i)
+				{
+					if (data[i])
+					{
+						--data[i];
+						break;
+					}
+					else data[i] = 9;
+				}
+			}
+			digit_num -= data[digit_num - 1] ? 0 : 1ull;
+		}
+		else
+		{
+			for (i = 0; i < digit_num; ++i)
+			{
+				data[i] = 10 + num.data[i] - data[i] - brw;
+				brw = (data[i] / 10) ? 0 : 1;
+				data[i] %= 10;
+			}
+			for (; i < data.size() && i < num.digit_num; ++i)
+			{
+				if (num.data[i])
+				{
+					data[i] = num.data[i] - brw;
+					brw = 0;
+				}
+				else
+				{
+					data[i] = brw ? 9 : 0;
+				}
+			}
+			for (; i < num.digit_num; ++i)
+			{
+				if (num.data[i])
+				{
+					data.push_back(num.data[i] - brw);
+					brw = 0;
+				}
+				else
+				{
+					data.push_back(brw ? 9 : 0);
+				}
+			}
+			digit_num = num.digit_num - (data[num.digit_num - 1] ? 0 : 1ull);
+			sign = num.sign;
+		}
 	}
 	return *this;
 }

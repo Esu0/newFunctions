@@ -12,15 +12,22 @@ int main()
 	system_clock::time_point start, end;
 	LongInt a, b, c(20, true);
 
-	a.random(8);
-	b.random(50);
+	a.random(10);
+	b.random(8);
+	b.absolute();
+	a = -a;
 	//cout << a << " / " << b << " = " << a / b << endl;
-	cout << "空ループ" << a << "回" << endl;
+	//cout << "空ループ" << a << "回" << endl;
 
+	cout << a << " + " << b << " = ";
+	a += b;
+	cout << a << endl;
+
+	cout << a << " - " << b << " = " << a - b << endl;
 	start = system_clock::now();
 
 	//c = a / b;
-	for (LongInt i; i <= a; ++i);
+	//for (LongInt i; i <= a; ++i);
 
 	end = system_clock::now();
 
