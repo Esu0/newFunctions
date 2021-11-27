@@ -1,9 +1,8 @@
 #include"functions.h"
 
 using namespace MyFunctions1;
-#define MULTI_DNUM 4
 
-LongInt::LongInt()noexcept:data{}, sign{ 0 }
+LongInt::LongInt()noexcept:data(1), sign{0}
 {}
 
 
@@ -115,7 +114,7 @@ void LongInt::tostring(std::string& str)const&
 	}
 }
 
-bool LongInt::operator<(const LongInt& num2)const&
+bool LongInt::operator<(const LongInt& num2)const& noexcept
 {
 	if (sign == num2.sign)
 	{
@@ -134,7 +133,7 @@ bool LongInt::operator<(const LongInt& num2)const&
 	else return sign;
 }
 
-bool LongInt::operator>(const LongInt& num2)const&
+bool LongInt::operator>(const LongInt& num2)const& noexcept
 {
 	if (sign == num2.sign)
 	{
@@ -153,16 +152,15 @@ bool LongInt::operator>(const LongInt& num2)const&
 	else return num2.sign;
 }
 
-bool LongInt::operator>=(const LongInt& num2)const&
+bool LongInt::operator>=(const LongInt& num2)const& noexcept
 {
 	return !operator<(num2);
 }
 
-bool LongInt::operator<=(const LongInt& num2)const&
+bool LongInt::operator<=(const LongInt& num2)const& noexcept
 {
 	return !operator>(num2);
 }
-
 
 void LongInt::addabs(const LongInt& num2, LongInt& result)const&
 {
@@ -259,9 +257,105 @@ void LongInt::multiplyabs(long long num, LongInt& result)const&
 	}
 }
 
-unsigned char LongInt::operator[](std::size_t index)const&
+unsigned char LongInt::operator[](std::size_t index)const& noexcept
 {
 	return index < data.size() ? data[index] : 0;
+}
+
+LongInt& LongInt::operator++()&
+{
+	if (sign)
+	{
+		if (digit_num == 1 && data[0] == 1)
+		{
+			data[0] = 0;
+			sign = 0;
+			return *this;
+		}
+		for (std::size_t i = 0; i < digit_num; ++i)
+		{
+			if (!(data[i]))
+			{
+				data[i] = 9;
+			}
+			else
+			{
+				--(data[i]);
+				return *this;
+			}
+		}
+	}
+	else
+	{
+		for (std::size_t i = 0; i < digit_num; ++i)
+		{
+			++(data[i]);
+			if (data[i] < 10)return *this;
+			else data[i] %= 10;
+		}
+		if (digit_num != data.size())data[digit_num++] = 1;
+		else
+		{
+			data.push_back(1);
+			++digit_num;
+		}
+	}
+	return *this;
+}
+
+LongInt LongInt::operator++(int)&
+{
+	LongInt tmp = *this;
+	this->operator++();
+	return tmp;
+}
+
+LongInt& LongInt::operator--()&
+{
+	if (sign)
+	{
+		for (std::size_t i = 0; i < digit_num; ++i)
+		{
+			++(data[i]);
+			if (data[i] < 10)return *this;
+			else data[i] %= 10;
+		}
+		if (digit_num != data.size())data[digit_num++] = 1;
+		else
+		{
+			data.push_back(1);
+			++digit_num;
+		}
+	}
+	else
+	{
+		if (digit_num == 1 && data[0] == 0)
+		{
+			data[0] = 1;
+			sign = 1;
+			return *this;
+		}
+		for (std::size_t i = 0; i < digit_num; ++i)
+		{
+			if (!(data[i]))
+			{
+				data[i] = 9;
+			}
+			else
+			{
+				--(data[i]);
+				return *this;
+			}
+		}
+	}
+	return *this;
+}
+
+LongInt LongInt::operator--(int)&
+{
+	LongInt tmp = *this;
+	this->operator--();
+	return tmp;
 }
 
 LongInt LongInt::operator+(const LongInt& num)const&
@@ -287,6 +381,44 @@ LongInt LongInt::operator+(const LongInt& num)const&
 		answer.sign = false;
 	}
 	return answer;
+}
+
+LongInt& LongInt::operator+=(const LongInt& num)&
+{
+	if (sign == num.sign)
+	{
+		std::size_t i;
+		byte carry = 0;
+		for (i = 0; i < data.size(); ++i)
+		{
+			if (i >= num.digit_num)
+			{
+				data[i] += carry;
+				if (data[i] >= 10)
+				{
+					data[i] -= 10;
+					carry = 1;
+					continue;
+				}
+				else break;
+			}
+			data[i] += num.data[i] + carry;
+			data[i] %= 10;
+			carry = data[i] / 10;
+		}
+		for (; i < num.digit_num; ++i)
+		{
+			data.push_back(num[i] + carry);
+			data[i] %= 10;
+			carry = data[i] / 10;
+		}
+	}
+	else
+	{
+		byte cmpresult;
+		
+	}
+	return *this;
 }
 
 LongInt LongInt::operator-(const LongInt& num)const&
@@ -318,7 +450,7 @@ LongInt LongInt::operator*(const LongInt& num)const&
 {
 	LongInt answer(digit_num + num.digit_num, true);
 	std::size_t j;
-	byte carry;
+	byte carry = 0;
 	for (std::size_t i = 0; i < num.digit_num; ++i)
 	{
 		carry = 0;
@@ -335,32 +467,74 @@ LongInt LongInt::operator*(const LongInt& num)const&
 	return answer;
 }
 
-//“r’†
+
 LongInt LongInt::operator/(const LongInt& num2)const&
 {
+	if (num2.digit_num == 1 && num2.data[0] == 0)throw std::out_of_range("œ”‚ª0");
+	if (digit_num < num2.digit_num)return LongInt();
+
 	LongInt answer(digit_num - num2.digit_num + 1, true);
-	LongInt r = *this;
-	byte multi = 0, pivot = num2.data[num2.digit_num - 1];
-	byte brw = 0;
-	signed short tmp;
-	for (std::size_t i = digit_num - num2.digit_num + 1; i <= 0;)
+	std::vector<byte> vtmp(digit_num + 1);
+	byte pivot = num2.data[num2.digit_num - 1];
+	signed char brw = 0;
+	signed char tmp;
+
+	for (std::size_t i = 0; i < digit_num; ++i)
+	{
+		vtmp[i] = data[i];
+	}
+
+	for (std::size_t i = digit_num - num2.digit_num + 1; i > 0;)
 	{
 		--i;
-		multi = (r[i + num2.digit_num] * 10 + r.data[i + num2.digit_num - 1]) / (pivot + 1);
-		if (multi != 0)
+		std::size_t j;
+		answer.data[i] = (vtmp[i + num2.digit_num] * 10 + vtmp[i + num2.digit_num - 1]) / (pivot + 1);
+		brw = 0;
+		for (j = i; j < i + num2.digit_num; ++j)
 		{
-			for (std::size_t j = 0; j < num2.digit_num; ++j)
+			tmp = (char)vtmp[j] - (char)(num2.data[j - i] * answer.data[i]) + brw + 100;
+			brw = tmp / 10 - 10;
+			vtmp[j] = (byte)(tmp % 10);
+		}
+		vtmp[j] += brw;
+		while (true)
+		{
+			if (vtmp[j] == 0)
 			{
-				tmp = (short)r[j + i] - (short)(num2[j] * multi);
+				while (j > i)
+				{
+					--j;
+					if (vtmp[j] < num2.data[j - i])goto loopend;
+					else if (vtmp[j] > num2.data[j - i])break;
+				}
 			}
+			brw = 0;
+			for (j = i; j < i + num2.digit_num; ++j)
+			{
+				tmp = (char)vtmp[j] - (char)num2.data[j - i] + brw;
+				if (tmp >= 0)
+				{
+					vtmp[j] = (byte)tmp;
+					brw = 0;
+				}
+				else
+				{
+					vtmp[j] = (byte)(tmp + 10);
+					brw = -1;
+				}
+			}
+			vtmp[j] += brw;
+			++(answer.data[i]);
 		}
-		for (std::size_t j = num2.digit_num; j <= 0;)
-		{
-			--j;
-		}
+	loopend:
+		;
 	}
+	answer.digit_num = answer.data.size();
+	if (*(answer.data.end() - 1) == 0)--(answer.digit_num);
+	answer.sign = sign ^ num2.sign;
 	return answer;
 }
+
 std::ostream& operator<<(std::ostream& output, const MyFunctions1::LongInt& numout)
 {
 	std::string tmp;

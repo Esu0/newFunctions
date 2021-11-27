@@ -38,18 +38,29 @@ namespace MyFunctions1
 		LongInt& operator=(LongInt&&)& = default;
 		LongInt& operator=(int)&;
 
-		bool operator<(const LongInt&)const&;
-		bool operator>(const LongInt&)const&;
-		bool operator<=(const LongInt&)const&;
-		bool operator>=(const LongInt&)const&;
+		bool operator<(const LongInt&)const& noexcept;
+		bool operator>(const LongInt&)const& noexcept;
+		bool operator<=(const LongInt&)const& noexcept;
+		bool operator>=(const LongInt&)const& noexcept;
+
+		LongInt& operator++()&;
+		LongInt operator++(int)&;
+		LongInt& operator--()&;
+		LongInt operator--(int)&;
 
 		LongInt operator+(const LongInt&)const&;//‰ÁZ
 		LongInt operator-(const LongInt&)const&;//Œ¸Z
 		LongInt operator*(const LongInt&)const&;//æZ
-		LongInt operator/(const LongInt&)const&;//œZ §ì“r’†
+		LongInt operator/(const LongInt&)const&;//œZ
 		LongInt operator%(const LongInt&)const&;//ƒ‚ƒWƒ…ƒ‹‰‰Z
 
-		byte operator[](std::size_t)const&;
+		LongInt& operator+=(const LongInt&)&;
+		LongInt& operator-=(const LongInt&)&;
+		LongInt& operator*=(const LongInt&)&;
+		LongInt& operator/=(const LongInt&)&;
+		LongInt& operator%=(const LongInt&)&;
+		
+		byte operator[](std::size_t)const& noexcept;
 
 		std::size_t getdnum()const&
 		{
@@ -69,6 +80,11 @@ namespace MyFunctions1
 				if (data[i] != 0)digit_num = i + 1;
 			}
 			sign = rand(mt) <= 4;
+		}
+
+		static LongInt zero()
+		{
+			return LongInt();
 		}
 
 		void tostring(std::string&)const&;

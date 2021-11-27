@@ -11,13 +11,16 @@ int main()
 {
 	system_clock::time_point start, end;
 	LongInt a, b, c(20, true);
-	a.random(10);
-	b.random(10);
 
-	cout << a << " * " << b << " = " << a * b << endl;
+	a.random(8);
+	b.random(50);
+	//cout << a << " / " << b << " = " << a / b << endl;
+	cout << "‹óƒ‹[ƒv" << a << "‰ñ" << endl;
+
 	start = system_clock::now();
 
-	c = a * b;
+	//c = a / b;
+	for (LongInt i; i <= a; ++i);
 
 	end = system_clock::now();
 
