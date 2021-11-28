@@ -21,7 +21,19 @@ namespace MyFunctions1
 		void addabs(const LongInt&, LongInt&)const&;
 		void subtractabs(const LongInt&, LongInt&)const&;//*this-num2>=0の前提
 		bool cmpabs(const LongInt&)const&;
-		
+
+		void check_dnum(std::size_t init)
+		{
+			for (std::size_t i = init; i > 0; --i)
+			{
+				if (data[i] != 0)
+				{
+					digit_num = i + 1ull;
+					return;
+				}
+			}
+			digit_num = 1ull;
+		}
 	public:
 		void multiplyabs(long long, LongInt&)const&;
 		LongInt()noexcept;//デフォルトコンストラクタ

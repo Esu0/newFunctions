@@ -95,12 +95,21 @@ LongInt::LongInt(std::size_t size, bool):data(size)
 
 LongInt& LongInt::operator=(int num)&
 {
-	LongInt tmp;
+	if (!num)
+	{
+		*this = LongInt();
+		return *this;
+	}
+	std::vector<byte> tmp;
+	sign = num < 0;
+	num *= sign ? -1 : 1;
 	while (num > 0)
 	{
-		tmp.data.push_back((unsigned char)(num % 10));
+		tmp.push_back((unsigned char)(num % 10));
 		num /= 10;
 	}
+	data = std::move(tmp);
+	digit_num = data.size();
 	return *this;
 }
 
@@ -113,6 +122,7 @@ void LongInt::tostring(std::string& str)const&
 		str.push_back((char)(data[i] + '0'));
 	}
 }
+
 
 bool LongInt::operator<(const LongInt& num2)const& noexcept
 {
@@ -161,6 +171,7 @@ bool LongInt::operator<=(const LongInt& num2)const& noexcept
 {
 	return !operator>(num2);
 }
+
 
 void LongInt::addabs(const LongInt& num2, LongInt& result)const&
 {
@@ -257,10 +268,12 @@ void LongInt::multiplyabs(long long num, LongInt& result)const&
 	}
 }
 
+
 unsigned char LongInt::operator[](std::size_t index)const& noexcept
 {
 	return index < data.size() ? data[index] : 0;
 }
+
 
 LongInt& LongInt::operator++()&
 {
@@ -358,6 +371,7 @@ LongInt LongInt::operator--(int)&
 	return tmp;
 }
 
+
 LongInt LongInt::operator+()const&
 {
 	return *this;
@@ -366,9 +380,10 @@ LongInt LongInt::operator+()const&
 LongInt LongInt::operator-()const&
 {
 	LongInt tmp = *this;
-	if (!(tmp.digit_num == 1 && tmp.data[0] == 0))tmp.sign = true;
+	if (!(tmp.digit_num == 1 && tmp.data[0] == 0))tmp.sign = !tmp.sign;
 	return tmp;
 }
+
 
 LongInt LongInt::operator+(const LongInt& num)const&
 {
@@ -491,7 +506,7 @@ LongInt& LongInt::operator+=(const LongInt& num)&
 					else data[i] = 9;
 				}
 			}
-			digit_num -= data[digit_num - 1] ? 0 : 1ull;
+			check_dnum(digit_num - 1);
 		}
 		else
 		{
@@ -525,7 +540,7 @@ LongInt& LongInt::operator+=(const LongInt& num)&
 					data.push_back(brw ? 9 : 0);
 				}
 			}
-			digit_num = num.digit_num - (data[num.digit_num - 1] ? 0 : 1ull);
+			check_dnum(num.digit_num - 1);
 			sign = num.sign;
 		}
 	}
@@ -557,8 +572,146 @@ LongInt LongInt::operator-(const LongInt& num)const&
 	return answer;
 }
 
+LongInt& LongInt::operator-=(const LongInt& num)&
+{
+	if (sign == num.sign)
+	{
+		signed char cmpresult = 0;
+		byte brw = 0;
+		std::size_t i;
+		if (digit_num == num.digit_num)
+		{
+			for (i = digit_num; i > 0;)
+			{
+				--i;
+				if (data[i] != num.data[i])
+				{
+					cmpresult = data[i] > num.data[i] ? 1 : -1;
+					break;
+				}
+			}
+		}
+		else cmpresult = digit_num > num.digit_num ? 1 : -1;
+		if (!cmpresult)*this = LongInt();
+		else if (cmpresult == 1)
+		{
+			for (i = 0; i < num.digit_num; ++i)
+			{
+				data[i] += 10 - num.data[i] - brw;
+				brw = (data[i] / 10) ? 0 : 1;
+				data[i] %= 10;
+			}
+			if (brw)
+			{
+				for (; i < digit_num; ++i)
+				{
+					if (data[i])
+					{
+						--data[i];
+						break;
+					}
+					else data[i] = 9;
+				}
+			}
+			check_dnum(digit_num - 1);
+		}
+		else
+		{
+			for (i = 0; i < digit_num; ++i)
+			{
+				data[i] = 10 + num.data[i] - data[i] - brw;
+				brw = (data[i] / 10) ? 0 : 1;
+				data[i] %= 10;
+			}
+			for (; i < data.size() && i < num.digit_num; ++i)
+			{
+				if (num.data[i])
+				{
+					data[i] = num.data[i] - brw;
+					brw = 0;
+				}
+				else
+				{
+					data[i] = brw ? 9 : 0;
+				}
+			}
+			for (; i < num.digit_num; ++i)
+			{
+				if (num.data[i])
+				{
+					data.push_back(num.data[i] - brw);
+					brw = 0;
+				}
+				else
+				{
+					data.push_back(brw ? 9 : 0);
+				}
+			}
+			check_dnum(num.digit_num - 1);
+			sign = !num.sign;
+		}
+	}
+	else
+	{
+		std::size_t i;
+		byte carry = 0;
+		for (i = 0; i < digit_num; ++i)
+		{
+			if (i >= num.digit_num)
+			{
+				data[i] += carry;
+				if (data[i] >= 10)
+				{
+					data[i] -= 10;
+					carry = 1;
+					continue;
+				}
+				else
+				{
+					carry = 0;
+					++i;
+					goto additionEnd;
+				}
+			}
+			data[i] += num.data[i] + carry;
+			carry = data[i] / 10;
+			data[i] %= 10;
+		}
+		for (; i < data.size(); ++i)
+		{
+			if (i >= num.digit_num)
+			{
+				data[i] = carry;
+				digit_num += carry;
+				carry = 0;
+				break;
+			}
+			data[i] += num.data[i] + carry;
+			carry = data[i] / 10;
+			data[i] %= 10;
+			++digit_num;
+		}
+		for (; i < num.digit_num; ++i)
+		{
+			data.push_back(num[i] + carry);
+			carry = data[i] / 10;
+			data[i] %= 10;
+			++digit_num;
+		}
+	additionEnd:
+		if (carry)
+		{
+			if (i >= data.size())data.push_back(1);
+			else data[i] = 1;
+			++digit_num;
+		}
+	}
+	return *this;
+}
+
 LongInt LongInt::operator*(const LongInt& num)const&
 {
+	if ((data[0] == 0 && digit_num == 1) || (num.data[0] == 0 && num.digit_num == 1))return LongInt();
 	LongInt answer(digit_num + num.digit_num, true);
 	std::size_t j;
 	byte carry = 0;
@@ -574,19 +727,45 @@ LongInt LongInt::operator*(const LongInt& num)const&
 		answer.data[i + j] = carry;
 	}
 	answer.sign = sign ^ num.sign;
-	answer.digit_num = carry == 0 ? answer.data.size() - 1 : answer.data.size();
+	answer.check_dnum(answer.data.size() - 1);
 	return answer;
 }
 
-
-LongInt LongInt::operator/(const LongInt& num2)const&
+LongInt& LongInt::operator*=(const LongInt& num)&
 {
-	if (num2.digit_num == 1 && num2.data[0] == 0)throw std::out_of_range("èúêîÇ™0");
-	if (digit_num < num2.digit_num)return LongInt();
+	if ((data[0] == 0 && digit_num == 1) || (num.data[0] == 0 && num.digit_num == 1))
+	{
+		*this = LongInt();
+		return *this;
+	}
+	std::vector<byte> answer(digit_num + num.digit_num);
+	byte carry = 0;
+	for (std::size_t i = 0; i < num.digit_num; ++i)
+	{
+		std::size_t j;
+		carry = 0;
+		for (j = 0; j < digit_num; ++j)
+		{
+			answer[i + j] += num.data[i] * data[j] + carry;
+			carry = answer[i + j] / 10;
+			answer[i + j] %= 10;
+		}
+		answer[i + j] = carry;
+	}
+	sign ^= num.sign;
+	data = std::move(answer);
+	check_dnum(data.size() - 1);
+	return *this;
+}
 
-	LongInt answer(digit_num - num2.digit_num + 1, true);
+LongInt LongInt::operator/(const LongInt& num)const&
+{
+	if (num.digit_num == 1 && num.data[0] == 0)throw std::out_of_range("èúêîÇ™0");
+	if (digit_num < num.digit_num)return LongInt();
+
+	LongInt answer(digit_num - num.digit_num + 1, true);
 	std::vector<byte> vtmp(digit_num + 1);
-	byte pivot = num2.data[num2.digit_num - 1];
+	byte pivot = num.data[num.digit_num - 1];
 	signed char brw = 0;
 	signed char tmp;
 
@@ -595,15 +774,15 @@ LongInt LongInt::operator/(const LongInt& num2)const&
 		vtmp[i] = data[i];
 	}
 
-	for (std::size_t i = digit_num - num2.digit_num + 1; i > 0;)
+	for (std::size_t i = digit_num - num.digit_num + 1; i > 0;)
 	{
 		--i;
 		std::size_t j;
-		answer.data[i] = (vtmp[i + num2.digit_num] * 10 + vtmp[i + num2.digit_num - 1]) / (pivot + 1);
+		answer.data[i] = (vtmp[i + num.digit_num] * 10 + vtmp[i + num.digit_num - 1]) / (pivot + 1);
 		brw = 0;
-		for (j = i; j < i + num2.digit_num; ++j)
+		for (j = i; j < i + num.digit_num; ++j)
 		{
-			tmp = (char)vtmp[j] - (char)(num2.data[j - i] * answer.data[i]) + brw + 100;
+			tmp = (char)vtmp[j] - (char)(num.data[j - i] * answer.data[i]) + brw + 100;
 			brw = tmp / 10 - 10;
 			vtmp[j] = (byte)(tmp % 10);
 		}
@@ -615,14 +794,14 @@ LongInt LongInt::operator/(const LongInt& num2)const&
 				while (j > i)
 				{
 					--j;
-					if (vtmp[j] < num2.data[j - i])goto loopend;
-					else if (vtmp[j] > num2.data[j - i])break;
+					if (vtmp[j] < num.data[j - i])goto loopend;
+					else if (vtmp[j] > num.data[j - i])break;
 				}
 			}
 			brw = 0;
-			for (j = i; j < i + num2.digit_num; ++j)
+			for (j = i; j < i + num.digit_num; ++j)
 			{
-				tmp = (char)vtmp[j] - (char)num2.data[j - i] + brw;
+				tmp = (char)vtmp[j] - (char)num.data[j - i] + brw;
 				if (tmp >= 0)
 				{
 					vtmp[j] = (byte)tmp;
@@ -642,7 +821,69 @@ LongInt LongInt::operator/(const LongInt& num2)const&
 	}
 	answer.digit_num = answer.data.size();
 	if (*(answer.data.end() - 1) == 0)--(answer.digit_num);
-	answer.sign = sign ^ num2.sign;
+	answer.sign = sign ^ num.sign;
+	return answer;
+}
+
+LongInt LongInt::operator%(const LongInt& num)const&
+{
+	if (num.digit_num == 1 && num.data[0] == 0)throw std::out_of_range("èúêîÇ™0");
+	if (digit_num < num.digit_num)return *this;
+
+	byte pivot = num.data[num.digit_num - 1];
+	signed char brw = 0;
+	signed char tmp;
+	LongInt answer = *this;
+	byte multi;
+	answer.data.push_back(0);
+
+	for (std::size_t i = digit_num - num.digit_num + 1; i > 0;)
+	{
+		--i;
+		std::size_t j;
+		multi = (answer.data[i + num.digit_num] * 10 + answer.data[i + num.digit_num - 1]) / (pivot + 1);
+		brw = 0;
+		for (j = i; j < i + num.digit_num; ++j)
+		{
+			tmp = (char)answer.data[j] - (char)(num.data[j - i] * multi) + brw + 100;
+			brw = tmp / 10 - 10;
+			answer.data[j] = (byte)(tmp % 10);
+		}
+		answer.data[j] += brw;
+		while (true)
+		{
+			if (answer.data[j] == 0)
+			{
+				while (j > i)
+				{
+					--j;
+					if (answer.data[j] < num.data[j - i])goto loopend;
+					else if (answer.data[j] > num.data[j - i])break;
+				}
+			}
+			brw = 0;
+			for (j = i; j < i + num.digit_num; ++j)
+			{
+				tmp = (char)answer.data[j] - (char)num.data[j - i] + brw;
+				if (tmp >= 0)
+				{
+					answer.data[j] = (byte)tmp;
+					brw = 0;
+				}
+				else
+				{
+					answer.data[j] = (byte)(tmp + 10);
+					brw = -1;
+				}
+			}
+			answer.data[j] += brw;
+			++multi;
+		}
+	loopend:
+		;
+	}
+	answer.check_dnum(num.digit_num - 1);
+	answer.sign = sign ^ num.sign;
 	return answer;
 }
 
