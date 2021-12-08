@@ -141,6 +141,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="functions.h" />
+    <ClInclude Include="LongIntBin.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="functions.cpp" />
