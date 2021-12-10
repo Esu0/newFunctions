@@ -2,11 +2,12 @@
 
 using namespace MyFunctions1;
 
+
 LongInt::LongInt()noexcept:data(1), sign{0}
 {}
 
-
-LongInt::LongInt(int num) : data{}, sign{ num < 0 }
+#if VERSION == 1
+LongInt::LongInt(int num): data{}, sign{ num < 0 }
 {
 	num = abs(num);
 	while (num > 0)
@@ -17,12 +18,17 @@ LongInt::LongInt(int num) : data{}, sign{ num < 0 }
 	if (data.empty())data.push_back(0);
 	digit_num = data.size();
 }
-
+#elif VERSION == 2
+LongInt::LongInt(int num) : data(1, num), sign{0}
+{
+	fix_carry();
+}
+#endif
 
 LongInt::LongInt(const char* snum):data{}, sign{0}
 {
 	byte tmp;
-	long long i = 0;
+	std::size_t i = 0;
 	if (*snum == '-')
 	{
 		++snum;
@@ -34,7 +40,11 @@ LongInt::LongInt(const char* snum):data{}, sign{0}
 	}
 	for (; *snum != '\0'; ++snum)
 	{
+#if VERSION == 1
 		data.push_back((byte)(*snum - '0'));
+#elif VERSION == 2
+		data.push_back(*snum - '0');
+#endif
 	}
 
 	//‡˜‚ð‹t‚É‚·‚é
@@ -45,7 +55,7 @@ LongInt::LongInt(const char* snum):data{}, sign{0}
 		data[data.size() - i - 1] = tmp;
 		++i;
 	}
-
+#if VERSION == 1
 	if (data.empty())
 	{
 		data.push_back(0);
@@ -57,9 +67,12 @@ LongInt::LongInt(const char* snum):data{}, sign{0}
 		while (data[digit_num] == 0 && digit_num != 0 && --digit_num != 0);
 		++digit_num;
 	}
+#elif VERSION == 2
+	del_zero();
+#endif
 }
 
-
+#if VERSION == 1
 LongInt::LongInt(const std::string& snum):data{}
 {
 	byte to = 0;
@@ -89,10 +102,12 @@ LongInt::LongInt(const std::string& snum):data{}
 		++digit_num;
 	}
 }
+#endif
 
 LongInt::LongInt(std::size_t size, bool):data(size)
 {}
 
+#if VERSION == 1
 LongInt& LongInt::operator=(int num)&
 {
 	if (!num)
@@ -112,12 +127,12 @@ LongInt& LongInt::operator=(int num)&
 	digit_num = data.size();
 	return *this;
 }
-
+#endif
 
 void LongInt::tostring(std::string& str)const&
 {
 	if (sign)str.push_back('-');
-	for (long long i = digit_num - 1; i >= 0; --i)
+	for (long long i = data.size() - 1; i >= 0; --i)
 	{
 		str.push_back((char)(data[i] + '0'));
 	}
@@ -128,9 +143,9 @@ bool LongInt::operator<(const LongInt& num2)const& noexcept
 {
 	if (sign == num2.sign)
 	{
-		if (digit_num == num2.digit_num)
+		if (data.size() == num2.data.size())
 		{
-			for (std::size_t i = digit_num; i > 0;)
+			for (std::size_t i = data.size(); i > 0;)
 			{
 				--i;
 				if (data[i] < num2.data[i])return true;
@@ -138,7 +153,7 @@ bool LongInt::operator<(const LongInt& num2)const& noexcept
 			}
 			return false;
 		}
-		else return digit_num < num2.digit_num;
+		else return data.size() < num2.data.size();
 	}
 	else return sign;
 }
@@ -147,9 +162,9 @@ bool LongInt::operator>(const LongInt& num2)const& noexcept
 {
 	if (sign == num2.sign)
 	{
-		if (digit_num == num2.digit_num)
+		if (data.size() == num2.data.size())
 		{
-			for (std::size_t i = digit_num; i > 0;)
+			for (std::size_t i = data.size(); i > 0;)
 			{
 				--i;
 				if (data[i] > num2.data[i])return true;
@@ -157,7 +172,7 @@ bool LongInt::operator>(const LongInt& num2)const& noexcept
 			}
 			return false;
 		}
-		else return digit_num > num2.digit_num;
+		else return data.size() > num2.data.size();
 	}
 	else return num2.sign;
 }
@@ -172,7 +187,7 @@ bool LongInt::operator<=(const LongInt& num2)const& noexcept
 	return !operator>(num2);
 }
 
-
+#if VERSION == 1
 void LongInt::addabs(const LongInt& num2, LongInt& result)const&
 {
 	byte carry = 0;
@@ -267,25 +282,31 @@ void LongInt::multiplyabs(long long num, LongInt& result)const&
 		if (result.data[i + cnt] != 0)result.digit_num = i + cnt + 1;
 	}
 }
+#endif
 
-
+#if VERSION == 1
 unsigned char LongInt::operator[](std::size_t index)const& noexcept
 {
 	return index < data.size() ? data[index] : 0;
 }
-
+#elif VERSION == 2
+int LongInt::operator[](std::size_t index)const& noexcept
+{
+	return index < data.size() ? data[index] : 0;
+}
+#endif
 
 LongInt& LongInt::operator++()&
 {
 	if (sign)
 	{
-		if (digit_num == 1 && data[0] == 1)
+		if (data.size() == 1 && data[0] == 1)
 		{
 			data[0] = 0;
 			sign = 0;
 			return *this;
 		}
-		for (std::size_t i = 0; i < digit_num; ++i)
+		for (std::size_t i = 0; i < data.size(); ++i)
 		{
 			if (!(data[i]))
 			{
@@ -300,18 +321,13 @@ LongInt& LongInt::operator++()&
 	}
 	else
 	{
-		for (std::size_t i = 0; i < digit_num; ++i)
+		for (std::size_t i = 0; i < data.size(); ++i)
 		{
 			++(data[i]);
 			if (data[i] < 10)return *this;
 			else data[i] %= 10;
 		}
-		if (digit_num != data.size())data[digit_num++] = 1;
-		else
-		{
-			data.push_back(1);
-			++digit_num;
-		}
+		data.push_back(1);
 	}
 	return *this;
 }
@@ -327,28 +343,23 @@ LongInt& LongInt::operator--()&
 {
 	if (sign)
 	{
-		for (std::size_t i = 0; i < digit_num; ++i)
+		for (std::size_t i = 0; i < data.size(); ++i)
 		{
 			++(data[i]);
 			if (data[i] < 10)return *this;
 			else data[i] %= 10;
 		}
-		if (digit_num != data.size())data[digit_num++] = 1;
-		else
-		{
-			data.push_back(1);
-			++digit_num;
-		}
+		data.push_back(1);
 	}
 	else
 	{
-		if (digit_num == 1 && data[0] == 0)
+		if (data.size() == 1 && data[0] == 0)
 		{
 			data[0] = 1;
 			sign = 1;
 			return *this;
 		}
-		for (std::size_t i = 0; i < digit_num; ++i)
+		for (std::size_t i = 0; i < data.size(); ++i)
 		{
 			if (!(data[i]))
 			{
@@ -380,11 +391,11 @@ LongInt LongInt::operator+()const&
 LongInt LongInt::operator-()const&
 {
 	LongInt tmp = *this;
-	if (!(tmp.digit_num == 1 && tmp.data[0] == 0))tmp.sign = !tmp.sign;
+	if (!(tmp.data.size() == 1 && tmp.data[0] == 0))tmp.sign = !tmp.sign;
 	return tmp;
 }
 
-
+#if VERSION == 1
 LongInt LongInt::operator+(const LongInt& num)const&
 {
 	LongInt answer((std::max)(digit_num, num.digit_num) + 1, true);
@@ -409,7 +420,38 @@ LongInt LongInt::operator+(const LongInt& num)const&
 	}
 	return answer;
 }
+#elif VERSION == 2
+LongInt LongInt::operator+(LongInt num)const&
+{
+	std::size_t i;
+	if (num.sign != sign)
+	{
+		for (i = 0; i < num.data.size(); ++i)
+		{
+			num.data[i] -= (*this)[i];
+		}
+		for (; i < data.size(); ++i)
+		{
+			num.data.push_back(-(this->data[i]));
+		}
+	}
+	else
+	{
+		for (i = 0; i < num.data.size(); ++i)
+		{
+			num.data[i] += (*this)[i];
+		}
+		for (; i < data.size(); ++i)
+		{
+			num.data.push_back(this->data[i]);
+		}
+	}
+	num.fix_carry();
+	return num;
+}
+#endif
 
+#if VERSION == 1
 LongInt& LongInt::operator+=(const LongInt& num)&
 {
 	if (sign == num.sign)
@@ -546,7 +588,11 @@ LongInt& LongInt::operator+=(const LongInt& num)&
 	}
 	return *this;
 }
+#elif VERSION == 2
 
+#endif
+
+#if VERSION == 1
 LongInt LongInt::operator-(const LongInt& num)const&
 {
 	LongInt answer((std::max)(digit_num, num.digit_num) + 1, true);
@@ -571,7 +617,39 @@ LongInt LongInt::operator-(const LongInt& num)const&
 	}
 	return answer;
 }
+#elif VERSION == 2
+LongInt LongInt::operator-(LongInt num)const&
+{
+	std::size_t i;
+	num.sign = !num.sign;
+	if (sign != num.sign)
+	{
+		for (i = 0; i < num.data.size(); ++i)
+		{
+			num.data[i] -= (*this)[i];
+		}
+		for (; i < data.size(); ++i)
+		{
+			num.data.push_back(-(this->data[i]));
+		}
+	}
+	else
+	{
+		for (i = 0; i < num.data.size(); ++i)
+		{
+			num.data[i] += (*this)[i];
+		}
+		for (; i < data.size(); ++i)
+		{
+			num.data.push_back(this->data[i]);
+		}
+	}
+	num.fix_carry();
+	return num;
+}
+#endif
 
+#if VERSION == 1
 LongInt& LongInt::operator-=(const LongInt& num)&
 {
 	if (sign == num.sign)
@@ -708,7 +786,11 @@ LongInt& LongInt::operator-=(const LongInt& num)&
 	}
 	return *this;
 }
+#elif VERSION == 2
 
+#endif
+
+#if VERSION == 1
 LongInt LongInt::operator*(const LongInt& num)const&
 {
 	if ((data[0] == 0 && digit_num == 1) || (num.data[0] == 0 && num.digit_num == 1))return LongInt();
@@ -886,6 +968,26 @@ LongInt LongInt::operator%(const LongInt& num)const&
 	answer.sign = sign ^ num.sign;
 	return answer;
 }
+#elif VERSION == 2
+LongInt& LongInt::operator*=(const LongInt& num)&
+{
+	unsigned long long size = 1;
+	unsigned long long i;
+	while (size < data.size() + num.data.size())size <<= 1;
+	std::vector<std::complex<double>> tmp1(size), tmp2(size);
+	for (i = 0; i < data.size(); ++i)tmp1[i] = std::complex<double>(data[i]);
+	for (i = 0; i < num.data.size(); ++i)tmp2[i] = std::complex<double>(num.data[i]);
+	fft(tmp1, 1);
+	fft(tmp2, 1);
+	for (i = 0; i < size; ++i)tmp1[i] *= tmp2[i];
+	fft(tmp1, -1);
+	this->data.resize(size);
+	for (i = 0; i < size; ++i)data[i] = (int)(tmp1[i].real() / size + 0.5);
+	sign ^= num.sign;
+	fix_carry();
+	return *this;
+}
+#endif
 
 std::ostream& operator<<(std::ostream& output, const MyFunctions1::LongInt& numout)
 {
@@ -900,6 +1002,6 @@ std::istream& operator>>(std::istream& input, LongInt& numin)
 {
 	std::string tmp;
 	input >> tmp;
-	numin = tmp;
+	numin = tmp.c_str();
 	return input;
 }

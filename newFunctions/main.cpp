@@ -1,4 +1,5 @@
 #include"functions.h"
+#include"LongIntBin.h"
 #include<chrono>
 
 
@@ -19,15 +20,14 @@ int main()
 {
 	system_clock::time_point start, end;
 	LongInt a, b, c(20, true);
-	
 
 	std::random_device seed;
 	std::mt19937_64 mt(seed());
 	std::uniform_int_distribution<> rand(10000000, 99999999);
 
-	int ia = rand(mt), ib = -23547;
-	a.random(40);
-	b.random(20);
+	int ia = 3313822, ib = -10002030;
+	a.random(100000);
+	b.random(100000);
 
 	//cout << a << " / " << b << " = " << a / b << endl;
 	//cout << "‹óƒ‹[ƒv" << a << "‰ñ" << endl;
@@ -42,19 +42,34 @@ int main()
 	a -= b;
 	cout << a << endl;
 	*/
-	cout << ia << " % " << ib << " = " << ia % ib << endl;
-	cout << a << " % " << b << " = " << a % b << endl;
+	//cout << ia << " % " << ib << " = " << ia % ib << endl;
+	//cout << a << " % " << b << " = " << a % b << endl;
 
-	cout << a << " * " << b << " = ";
-	a = a * b;
-	cout << a << "\n";
+	//cout << a << " * " << b << " = ";
+	//a = a * b;
+	//cout << a << "\n";
+	//cin >> a;
+	//cin >> b;
+	//a = ia;
+	//b = ib;
 
+	//cout << "ia = " << ia << endl;
+	cout << "a = " << a << endl;
+	//cout << "ib = " << ib << endl;
+	cout << "b = " << b << endl;
+	//cout << "ia + ib = " << ia + ib << endl;
+
+	cout << "a - b = " << a - b << endl;
+
+	a *= b;
+	cout << "a * b = " << a << endl;
+	//x.outhex();
 #endif
 
 #ifdef TIME
 	start = system_clock::now();
 
-	c = a * b;
+	//c = a + b;
 
 	end = system_clock::now();
 
