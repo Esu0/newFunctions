@@ -3,7 +3,7 @@
 #include<chrono>
 
 
-#define DEBUG
+//#define DEBUG
 
 #ifndef DEBUG
 #define TIME
@@ -27,7 +27,7 @@ int main()
 
 	int ia = 3313822, ib = -10002030;
 	a.random(100000);
-	b.random(100000);
+	b.random(1);
 
 	//cout << a << " / " << b << " = " << a / b << endl;
 	//cout << "‹óƒ‹[ƒv" << a << "‰ñ" << endl;
@@ -67,6 +67,8 @@ int main()
 #endif
 
 #ifdef TIME
+	LongInt::mycomplex za(1, 1.2), zb(1.01, 1.03), zc;
+	std::complex<double> za2(1, 1.2), zb2(1.01, 1.03), zc2;
 	start = system_clock::now();
 
 	//c = a + b;
@@ -82,8 +84,14 @@ int main()
 	//for (LongInt i; i <= a; ++i);
 	//a -= b;
 	a *= b;
-	end = system_clock::now();
+	/*
+	for (int i = 0; i < 100000000; ++i)
+	{
 
+	}
+	*/
+	end = system_clock::now();
+	cout << etime << endl;
 	exetime = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000.0;
 	cout << "execution time of a *= b : " << exetime << " ms\n";
 #endif

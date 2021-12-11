@@ -1,4 +1,5 @@
 #include"functions.h"
+#include<time.h>
 
 using namespace MyFunctions1;
 
@@ -972,17 +973,76 @@ LongInt LongInt::operator%(const LongInt& num)const&
 LongInt& LongInt::operator*=(const LongInt& num)&
 {
 	unsigned long long size = 1;
-	unsigned long long i;
+	unsigned long long i, k = 0;
 	while (size < data.size() + num.data.size())size <<= 1;
-	std::vector<std::complex<double>> tmp1(size), tmp2(size);
-	for (i = 0; i < data.size(); ++i)tmp1[i] = std::complex<double>(data[i]);
-	for (i = 0; i < num.data.size(); ++i)tmp2[i] = std::complex<double>(num.data[i]);
-	fft(tmp1, 1);
-	fft(tmp2, 1);
-	for (i = 0; i < size; ++i)tmp1[i] *= tmp2[i];
-	fft(tmp1, -1);
-	this->data.resize(size);
-	for (i = 0; i < size; ++i)data[i] = (int)(tmp1[i].real() / size + 0.5);
+	std::vector<mycomplex> tmp1(size), tmp2(size);
+	if ((std::min)(data.size(), num.data.size()) > size >> 2)
+	{
+		for (i = 0; i < data.size(); ++i)tmp1[i].real = data[i];
+		for (i = 0; i < num.data.size(); ++i)tmp2[i].real = num.data[i];
+		mycomplex* copy = new mycomplex[size];
+		fft(tmp1, 1, copy);
+		fft(tmp2, 1, copy);
+		for (i = 0; i < size; ++i)tmp1[i].times(tmp2[i]);
+		fft(tmp1, -1, copy);
+		delete[] copy;
+		this->data.resize(data.size() + num.data.size());
+		for (i = 0; i < data.size(); ++i)data[i] = (int)(tmp1[i].real / size + 0.5);
+	}
+	else if (num.data.size() < data.size())
+	{
+		std::vector<int> ntmp(data.size() + num.data.size());
+		while (num.data.size() << 2 > size)size >>= 1;
+		for (i = 0; i < num.data.size(); ++i)tmp2[i].real = num.data[i];
+		mycomplex* copy = new mycomplex[size];
+		fft(tmp2, 1, copy);
+		while (k < data.size())
+		{
+			for (i = 0; i + k < data.size() && i < size >> 1; ++i)
+			{
+				tmp1[i].real = data[i + k];
+				tmp1[i].imag = 0;
+			}
+			for (; i < size; ++i)
+			{
+				tmp1[i].real = 0;
+				tmp1[i].imag = 0;
+			}
+			fft(tmp1, 1, copy);
+			for (i = 0; i < size; ++i)tmp1[i].times(tmp2[i]);
+			fft(tmp1, -1, copy);
+			for (i = 0; i + k < ntmp.size() && i < size; ++i)ntmp[i + k] += (int)(tmp1[i].real / size + 0.5);
+			k += size >> 1;
+		}
+		data = std::move(ntmp);
+	}
+	else
+	{
+		while (data.size() << 2 > size)size >>= 1;
+		for (i = 0; i < data.size(); ++i)tmp2[i].real = data[i];
+		for (auto& tmp : data)tmp = 0;
+		data.resize(data.size() + num.data.size());
+		mycomplex* copy = new mycomplex[size];
+		fft(tmp2, 1, copy);
+		while (k < num.data.size())
+		{
+			for (i = 0; i + k < num.data.size() && i < size >> 1; ++i)
+			{
+				tmp1[i].real = num.data[i + k];
+				tmp1[i].imag = 0;
+			}
+			for (; i < size; ++i)
+			{
+				tmp1[i].real = 0;
+				tmp1[i].imag = 0;
+			}
+			fft(tmp1, 1, copy);
+			for (i = 0; i < size; ++i)tmp1[i].times(tmp2[i]);
+			fft(tmp1, -1, copy);
+			for (i = 0; i + k < data.size() && i < size; ++i)data[i + k] += (int)(tmp1[i].real / size + 0.5);
+			k += size >> 1;
+		}
+	}
 	sign ^= num.sign;
 	fix_carry();
 	return *this;

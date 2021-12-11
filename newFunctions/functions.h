@@ -6,15 +6,13 @@
 #include<random>
 #include<complex>
 #include<cmath>
+#include"time_debug.h"
 
 #define VERSION 2
+#define PI 3.141592653589793238462643383279502884197169399375
 
 namespace MyFunctions1
 {
-	class mycomplex
-	{
-
-	};
 	//‘½”{’·®”
 	class LongInt
 	{
@@ -34,6 +32,63 @@ namespace MyFunctions1
 		void addabs(const LongInt&, LongInt&)const&;
 		void subtractabs(const LongInt&, LongInt&)const&;//*this-num2>=0‚Ì‘O’ñ
 		bool cmpabs(const LongInt&)const&;
+
+#if VERSION == 2
+	public:
+		class mycomplex
+		{
+		public:
+			double real = 0.0;
+			double imag = 0.0;
+
+			mycomplex()noexcept
+			{}
+
+			mycomplex(double r, double i)noexcept :real(r), imag(i)
+			{}
+
+			mycomplex(double theta):real(std::cos(theta)), imag(std::sin(theta))
+			{}
+			
+			mycomplex(const mycomplex&) = default;
+			mycomplex(mycomplex&&) = default;
+			virtual ~mycomplex()noexcept = default;
+
+			mycomplex& operator=(const mycomplex& z)& noexcept
+			{
+				real = z.real;
+				imag = z.imag;
+				return *this;
+			}
+			mycomplex& operator=(mycomplex&&)& = default;
+
+			void times(const mycomplex& z)&
+			{
+				double tmp = real;
+				real *= z.real;
+				real -= imag * z.imag;
+				imag *= z.real;
+				imag += z.imag * tmp;
+			}
+			
+			mycomplex multiply(const mycomplex& z)const&
+			{
+				return mycomplex(real * z.real - imag * z.imag, real * z.imag + z.real * imag);
+			}
+
+			void add(const mycomplex& z1, const mycomplex& z2)&
+			{
+				real = z1.real + z2.real;
+				imag = z1.imag + z2.imag;
+			}
+			void add(const mycomplex& z)&
+			{
+				real += z.real;
+				imag += z.imag;
+			}
+		};
+#endif
+	private:
 #if VERSION == 1
 		void check_dnum(std::size_t init)
 		{
@@ -111,23 +166,53 @@ namespace MyFunctions1
 #if VERSION == 1
 		void multiplyabs(long long, LongInt&)const&;
 #elif VERSION == 2
-		static void fft(std::vector<std::complex<double>>& vec, int inv)
+		static void fft(std::vector<mycomplex>& vec, int inv, mycomplex* copy, unsigned long long begin = 0, unsigned long long n = 1)
 		{
-			std::size_t size = vec.size();
+			std::size_t size = vec.size() / n;
 			if (size == 1)return;
-			std::vector<std::complex<double>> func0, func1;
-			for (unsigned long long i = 0; i < size; i += 2)
+			fft(vec, inv, copy, begin, n << 1);
+			fft(vec, inv, copy, begin + n, n << 1);
+			mycomplex k(1.0, 0.0), zeta(inv * 2 * PI / size);
+			size >>= 1;
+			unsigned long long i, j;
+			for (i = begin; i < vec.size(); i += n)
 			{
-				func0.push_back(vec[i]);
-				func1.push_back(vec[i + 1]);
+				copy[i].real = vec[i].real;
+				copy[i].imag = vec[i].imag;
 			}
-			fft(func0, inv);
-			fft(func1, inv);
-			std::complex<double> k = 1.0, zeta = std::exp(std::complex<double>(0.0, inv * 2.0 * std::acos(-1) / size));
-			for (unsigned long long i = 0; i < size; ++i)
+			j = begin;
+			for (i = begin; j < vec.size(); i += n)
 			{
-				vec[i] = func0[i % (size / 2)] + k * func1[i % (size / 2)];
-				k *= zeta;
+				vec[i].add(copy[j], k.multiply(copy[j + n]));
+				k.times(zeta);
+				j += n * 2;
+			}
+			for (j = begin; i < vec.size(); i += n)
+			{
+				vec[i].add(copy[j], k.multiply(copy[j + n]));
+				k.times(zeta);
+				j += n * 2;
+			}
+		}
+		static void fft_nr(std::vector<mycomplex>& vec, int inv, mycomplex* copy, unsigned long long begin = 0, unsigned long long n = 1)
+		{
+			for (unsigned long long i = begin; i < vec.size(); i += n)
+			{
+				copy[i] = vec[i];
+			}
+			mycomplex zetaij(1.0, 0.0), zetai(1.0, 0.0), zeta(inv * 2.0 * PI / (vec.size() / n));
+			for (unsigned long long i = begin; i < vec.size(); i += n)
+			{
+				vec[i].real = 0;
+				vec[i].imag = 0;
+				zetaij.real = 1.0;
+				zetaij.imag = 0.0;
+				for (unsigned long long j = begin; j < vec.size(); j += n)
+				{
+					vec[i].add(zetaij.multiply(copy[j]));
+					zetaij.times(zetai);
+				}
+				zetai.times(zeta);
 			}
 		}
 #endif
