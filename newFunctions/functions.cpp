@@ -590,7 +590,22 @@ LongInt& LongInt::operator+=(const LongInt& num)&
 	return *this;
 }
 #elif VERSION == 2
-
+LongInt& LongInt::operator+=(const LongInt& num)&
+{
+	unsigned long long i;
+	if (sign == num.sign)
+	{
+		for (i = 0; i < (std::min)(num.data.size(), data.size()); ++i)data[i] += num.data[i];
+		for (; i < num.data.size(); ++i)data.push_back(num.data[i]);
+	}
+	else
+	{
+		for (i = 0; i < (std::min)(data.size(), num.data.size()); ++i)data[i] -= num.data[i];
+		for (; i < num.data.size(); ++i)data.push_back(-num.data[i]);
+	}
+	fix_carry();
+	return *this;
+}
 #endif
 
 #if VERSION == 1
@@ -788,7 +803,22 @@ LongInt& LongInt::operator-=(const LongInt& num)&
 	return *this;
 }
 #elif VERSION == 2
-
+LongInt& LongInt::operator-=(const LongInt& num)&
+{
+	unsigned long long i;
+	if (sign != num.sign)
+	{
+		for (i = 0; i < (std::min)(num.data.size(), data.size()); ++i)data[i] += num.data[i];
+		for (; i < num.data.size(); ++i)data.push_back(num.data[i]);
+	}
+	else
+	{
+		for (i = 0; i < (std::min)(num.data.size(), data.size()); ++i)data[i] -= num.data[i];
+		for (; i < num.data.size(); ++i)data.push_back(-num.data[i]);
+	}
+	fix_carry();
+	return *this;
+}
 #endif
 
 #if VERSION == 1
@@ -970,6 +1000,8 @@ LongInt LongInt::operator%(const LongInt& num)const&
 	return answer;
 }
 #elif VERSION == 2
+
+#if defined(MULTI_REVISED)
 LongInt& LongInt::operator*=(const LongInt& num)&
 {
 	unsigned long long size = 1;
@@ -1047,6 +1079,93 @@ LongInt& LongInt::operator*=(const LongInt& num)&
 	fix_carry();
 	return *this;
 }
+#else
+LongInt LongInt::operator*(const LongInt& num)const&
+{
+	unsigned long long size = 1, cnt = 0, i, k = 0;
+	LongInt tmp(data.size() + num.data.size(), true);
+	while (size < data.size() + num.data.size())
+	{
+		size <<= 1;
+		cnt += 20;
+	}
+	if (cnt > num.data.size())
+	{
+		num.multiply_nr(*this, tmp);
+	}
+	else if (cnt > data.size())
+	{
+		multiply_nr(num, tmp);
+	}
+	else
+	{
+		std::vector<mycomplex> tmp1(size), tmp2(size);
+		for (i = 0; i < data.size(); ++i)tmp1[i].real = data[i];
+		for (i = 0; i < num.data.size(); ++i)tmp2[i].real = num.data[i];
+		mycomplex* copy = new mycomplex[size];
+		fft(tmp1, 1, copy);
+		fft(tmp2, 1, copy);
+		for (i = 0; i < size; ++i)tmp1[i].times(tmp2[i]);
+		fft(tmp1, -1, copy);
+		delete[] copy;
+		tmp.data.resize(data.size() + num.data.size());
+		for (i = 0; i < data.size(); ++i)tmp.data[i] = (int)(tmp1[i].real / size + 0.5);
+	}
+	tmp.sign = sign ^ num.sign;
+	tmp.fix_carry();
+	return tmp;
+}
+
+LongInt& LongInt::operator*=(const LongInt& num)&
+{
+	unsigned long long size = 1, cnt = 0;
+	unsigned long long i, k = 0;
+	while (size < data.size() + num.data.size())
+	{
+		size <<= 1;
+		cnt += 20;
+	}
+	if (cnt > num.data.size())
+	{
+		LongInt tmp(data.size() + num.data.size(), true);
+		num.multiply_nr(*this, tmp);
+		tmp.sign = sign ^ num.sign;
+		tmp.fix_carry();
+		*this = std::move(tmp);
+	}
+	else if (cnt > data.size())
+	{
+		LongInt tmp(data.size() + num.data.size(), true);
+		multiply_nr(num, tmp);
+		tmp.sign = sign ^ num.sign;
+		tmp.fix_carry();
+		*this = std::move(tmp);
+	}
+	else
+	{
+		std::vector<mycomplex> tmp1(size), tmp2(size);
+		for (i = 0; i < data.size(); ++i)tmp1[i].real = data[i];
+		for (i = 0; i < num.data.size(); ++i)tmp2[i].real = num.data[i];
+		mycomplex* copy = new mycomplex[size];
+		fft(tmp1, 1, copy);
+		fft(tmp2, 1, copy);
+		for (i = 0; i < size; ++i)tmp1[i].times(tmp2[i]);
+		fft(tmp1, -1, copy);
+		delete[] copy;
+		this->data.resize(data.size() + num.data.size());
+		for (i = 0; i < data.size(); ++i)data[i] = (int)(tmp1[i].real / size + 0.5);
+		sign ^= num.sign;
+		fix_carry();
+	}
+	return *this;
+}
+
+LongInt LongInt::operator/(const LongInt& num)const&
+{
+	//ŽŸ
+	return LongInt();
+}
+#endif
 #endif
 
 std::ostream& operator<<(std::ostream& output, const MyFunctions1::LongInt& numout)

@@ -10,6 +10,7 @@
 
 #define VERSION 2
 #define PI 3.141592653589793238462643383279502884197169399375
+//#define MULTI_REVISED
 
 namespace MyFunctions1
 {
@@ -105,8 +106,14 @@ namespace MyFunctions1
 #endif
 
 #if VERSION == 2
-		void del_zero()&
+		void del_zero()& noexcept
 		{
+			if (data.empty())
+			{
+				data.push_back(0);
+				sign = 0;
+				return;
+			}
 			while (data.size() > 1 && !data.back())
 			{
 				data.pop_back();
@@ -166,15 +173,24 @@ namespace MyFunctions1
 #if VERSION == 1
 		void multiplyabs(long long, LongInt&)const&;
 #elif VERSION == 2
+		void multiply_nr(const LongInt& num, LongInt& result)const&
+		{
+			for (unsigned long long i = 0; i < data.size(); ++i)
+			{
+				for (unsigned long long j = 0; j < num.data.size(); ++j)
+				{
+					result.data[i + j] += data[i] * num.data[j];
+				}
+			}
+		}
+
 		static void fft(std::vector<mycomplex>& vec, int inv, mycomplex* copy, unsigned long long begin = 0, unsigned long long n = 1)
 		{
-			std::size_t size = vec.size() / n;
-			if (size == 1)return;
+			static unsigned long long i, j, l;
+			if (vec.size() == n)return;
 			fft(vec, inv, copy, begin, n << 1);
 			fft(vec, inv, copy, begin + n, n << 1);
-			mycomplex k(1.0, 0.0), zeta(inv * 2 * PI / size);
-			size >>= 1;
-			unsigned long long i, j;
+			mycomplex k(1.0, 0.0), zeta(inv * 2 * PI / (vec.size() / n));
 			for (i = begin; i < vec.size(); i += n)
 			{
 				copy[i].real = vec[i].real;
@@ -183,15 +199,19 @@ namespace MyFunctions1
 			j = begin;
 			for (i = begin; j < vec.size(); i += n)
 			{
-				vec[i].add(copy[j], k.multiply(copy[j + n]));
+				l = j + n;
+				vec[i].real = copy[j].real + k.real * copy[l].real - k.imag * copy[l].imag;
+				vec[i].imag = copy[j].imag + k.real * copy[l].imag + k.imag * copy[l].real;
 				k.times(zeta);
-				j += n * 2;
+				j += n << 1;
 			}
 			for (j = begin; i < vec.size(); i += n)
 			{
-				vec[i].add(copy[j], k.multiply(copy[j + n]));
+				l = j + n;
+				vec[i].real = copy[j].real + k.real * copy[l].real - k.imag * copy[l].imag;
+				vec[i].imag = copy[j].imag + k.real * copy[l].imag + k.imag * copy[l].real;
 				k.times(zeta);
-				j += n * 2;
+				j += n << 1;
 			}
 		}
 		static void fft_nr(std::vector<mycomplex>& vec, int inv, mycomplex* copy, unsigned long long begin = 0, unsigned long long n = 1)
@@ -219,12 +239,14 @@ namespace MyFunctions1
 		LongInt()noexcept;//デフォルトコンストラクタ
 		LongInt(int);//コンストラクタint
 		LongInt(std::size_t, bool);
+#if VERSION == 1
 		LongInt(const std::string&);//コンストラクタstring
+#endif
 		LongInt(const char*);//コンストラクタchar*
 		LongInt(const LongInt&) = default;//コピーコンストラクタ
 		LongInt(LongInt&&) = default;//ムーブコンストラクタ
 
-		virtual ~LongInt() = default;
+		virtual ~LongInt()noexcept = default;
 
 		LongInt& operator=(const LongInt&)& = default;
 		LongInt& operator=(LongInt&&)& = default;
@@ -260,9 +282,9 @@ namespace MyFunctions1
 		LongInt& operator+=(const LongInt&)&;
 		LongInt& operator-=(const LongInt&)&;
 		LongInt& operator*=(const LongInt&)&;
-		LongInt& operator/=(const LongInt&)&;
-		LongInt& operator%=(const LongInt&)&;
 #elif VERSION == 2
+		LongInt& operator+=(const LongInt&)&;
+		LongInt& operator-=(const LongInt&)&;
 		LongInt& operator*=(const LongInt&)&;
 #endif
 #if VERSION == 1

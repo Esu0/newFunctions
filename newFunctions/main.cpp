@@ -3,7 +3,7 @@
 #include<chrono>
 
 
-//#define DEBUG
+#define DEBUG
 
 #ifndef DEBUG
 #define TIME
@@ -26,8 +26,14 @@ int main()
 	std::uniform_int_distribution<> rand(10000000, 99999999);
 
 	int ia = 3313822, ib = -10002030;
+
+#if defined(DEBUG)
+	a.random(10);
+	b.random(5);
+#else
 	a.random(100000);
-	b.random(1);
+	b.random(100000);
+#endif
 
 	//cout << a << " / " << b << " = " << a / b << endl;
 	//cout << "‹óƒ‹[ƒv" << a << "‰ñ" << endl;
@@ -58,11 +64,13 @@ int main()
 	//cout << "ib = " << ib << endl;
 	cout << "b = " << b << endl;
 	//cout << "ia + ib = " << ia + ib << endl;
-
+	//cout << "a + b = " << a + b << endl;
+	//a += b;
+	//cout << "a + b = " << a << endl;
 	cout << "a - b = " << a - b << endl;
-
-	a *= b;
-	cout << "a * b = " << a << endl;
+	a -= b;
+	cout << "a - b = " << a << endl;
+	//cout << "a * b = " << a * b << endl;
 	//x.outhex();
 #endif
 
@@ -83,7 +91,7 @@ int main()
 	//c = a / b;
 	//for (LongInt i; i <= a; ++i);
 	//a -= b;
-	a *= b;
+	c = a * b;
 	/*
 	for (int i = 0; i < 100000000; ++i)
 	{
