@@ -10,6 +10,9 @@
 
 #define VERSION 2
 #define PI 3.141592653589793238462643383279502884197169399375
+#define NTT_ROOT 132510160
+#define NTT_ROOT_INV 538466283
+#define NTT_DIV 998244353
 //#define MULTI_REVISED
 
 namespace MyFunctions1
@@ -235,6 +238,22 @@ namespace MyFunctions1
 				zetai.times(zeta);
 			}
 		}
+		/*
+		static void ntt(
+			std::vector<unsigned long long>& vec, 
+			int inv, 
+			unsigned long long* copy, 
+			unsigned long long begin = 0, 
+			unsigned long long n = 1
+		)
+		{
+			static unsigned long long i, j, k;
+			if (vec.size() == n)return;
+			ntt(vec, inv, copy, begin, n << 1);
+			ntt(vec, inv, copy, begin + n, n << 1);
+
+		}
+		*/
 #endif
 		LongInt()noexcept;//デフォルトコンストラクタ
 		LongInt(int);//コンストラクタint

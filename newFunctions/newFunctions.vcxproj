@@ -142,12 +142,15 @@
   <ItemGroup>
     <ClInclude Include="functions.h" />
     <ClInclude Include="LongIntBin.h" />
+    <ClInclude Include="modulo.h" />
+    <ClInclude Include="number_theoretic_transform.h" />
     <ClInclude Include="time_debug.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="functions.cpp" />
     <ClCompile Include="LongIntBin.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="modulo.cpp" />
     <ClCompile Include="time_debug.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
