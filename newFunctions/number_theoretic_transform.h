@@ -13,8 +13,7 @@ private:
 public:
 	Number_Theoretic_Transform(): Root(), inv_Root()
 	{
-		unsigned int root_n, inv_root_n;
-		root_n = Div - 1;
+		unsigned int root_n = Div - 1, inv_root_n;
 		while (!(root_n % 2))
 		{
 			root_n >>= 1;
@@ -24,6 +23,24 @@ public:
 		}
 		root_n = mpow(Primitive_root, root_n, Div);
 		inv_root_n = mpow(root_n, Times - 1, Div);
+		for (unsigned int i = 0; i < Root.size(); ++i)
+		{
+			Root[i] = mpow(root_n, Times >> (i + 1), Div);
+			inv_Root[i] = mpow(inv_root_n, Times >> (i + 1), Div);
+		}
+	}
+
+	Number_Theoretic_Transform(unsigned int root_n) : Root(), inv_Root()
+	{
+		unsigned int inv_root_n = Div - 1;
+		while (!(inv_root_n % 2))
+		{
+			inv_root_n >>= 1;
+			Times <<= 1;
+			Root.push_back(0);
+			inv_Root.push_back(0);
+		}
+		inv_root_n = (unsigned int)minv(root_n, Div);
 		for (unsigned int i = 0; i < Root.size(); ++i)
 		{
 			Root[i] = mpow(root_n, Times >> (i + 1), Div);
@@ -46,7 +63,7 @@ public:
 		for (i = begin; j < vec.size(); i += e)
 		{
 			k = j + e;
-			vec[i] = (copy[j] + ((l * copy[k]) % Div)) % Div;
+			vec[i] = (copy[j] + (l * copy[k])) % Div;
 			if (inv)l *= inv_Root[m];
 			else l *= Root[m];
 			l %= Div;
@@ -55,7 +72,7 @@ public:
 		for (j = begin; i < vec.size(); i += e)
 		{
 			k = j + e;
-			vec[i] = (copy[j] + ((l * copy[k]) % Div)) % Div;
+			vec[i] = (copy[j] + (l * copy[k])) % Div;
 			if (inv)l *= inv_Root[m];
 			else l *= Root[m];
 			l %= Div;
@@ -63,3 +80,5 @@ public:
 		}
 	}
 };
+
+using NTT = Number_Theoretic_Transform<>;

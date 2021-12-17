@@ -3,7 +3,7 @@
 #include<chrono>
 #include"number_theoretic_transform.h"
 
-#define DEBUG
+//#define DEBUG
 
 #ifndef DEBUG
 #define TIME
@@ -28,12 +28,10 @@ int main()
 	int ia = 3313822, ib = -10002030;
 #if defined(DEBUG)
 	a.random(10);
-	b.random(5);
-	a = 3;
-	c = 1;
+	b.random(10);
 #else
-	a.random(100000);
-	b.random(100000);
+	a.random(1000000);
+	b.random(5000);
 #endif
 
 	//cout << a << " / " << b << " = " << a / b << endl;
@@ -71,14 +69,12 @@ int main()
 	//cout << "a - b = " << a - b << endl;
 	//a -= b;
 	//cout << "a - b = " << a << endl;
-	//cout << "a * b = " << a * b << endl;
+	
+	cout << a << " * " << b << " = " << a * b << " = ";
+	a *= b;
+	cout << a << endl;
 	//x.outhex();
-	Number_Theoretic_Transform<> ntt;
-	std::vector<unsigned long long> ar = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 };
-	unsigned long long* copy = new unsigned long long[16];
-	ntt(ar, 3, false, copy);
-	ntt(ar, 3, true, copy);
-	for (auto tmp : ar)cout << tmp << " ";
+	cout << endl;
 #endif
 
 #ifdef TIME
@@ -98,7 +94,7 @@ int main()
 	//c = a / b;
 	//for (LongInt i; i <= a; ++i);
 	//a -= b;
-	c = a * b;
+	a *= b;
 	/*
 	for (int i = 0; i < 100000000; ++i)
 	{

@@ -1,5 +1,6 @@
 #include"functions.h"
 #include<time.h>
+#include"number_theoretic_transform.h"
 
 using namespace MyFunctions1;
 
@@ -1080,6 +1081,143 @@ LongInt& LongInt::operator*=(const LongInt& num)&
 	return *this;
 }
 #else
+#if defined(USE_NTT)
+#define NTT_PRIME1 2013265921
+#define NTT_ROOT1 137
+#define NTT_PRIME2 1811939329
+#define NTT_ROOT2 136
+
+LongInt LongInt::operator*(const LongInt& num)const&
+{
+	LongInt tmp(data.size() + num.data.size(), true);
+	unsigned long long size = 1;
+	int cnt = 0;
+	unsigned long long i, k = 0;
+	while (size < data.size() + num.data.size())
+	{
+		size <<= 1;
+		cnt += 1;
+	}
+	if ((unsigned long long)(cnt * 20) > num.data.size())
+	{
+		num.multiply_nr(*this, tmp);
+
+	}
+	else if ((unsigned long long)(cnt * 20) > data.size())
+	{
+		multiply_nr(num, tmp);
+	}
+	else
+	{
+		static Number_Theoretic_Transform<NTT_PRIME1> ntt1(NTT_ROOT1);
+		static Number_Theoretic_Transform<NTT_PRIME2> ntt2(NTT_ROOT2);
+		std::vector<unsigned long long> tmp11(size), tmp21(size);
+		for (i = 0; i < data.size(); ++i)tmp11[i] = data[i];
+		for (i = 0; i < num.data.size(); ++i)tmp21[i] = num.data[i];
+		unsigned long long* copy = new unsigned long long[size];
+		std::vector<unsigned long long> tmp12, tmp22;
+		if (cnt > 12)
+		{
+			tmp12 = tmp11;
+			tmp22 = tmp21;
+			ntt2(tmp12, cnt - 1, false, copy);
+			ntt2(tmp22, cnt - 1, false, copy);
+			for (i = 0; i < size; ++i)
+			{
+				tmp12[i] *= tmp22[i];
+				tmp12[i] %= NTT_PRIME2;
+			}
+			ntt2(tmp12, cnt - 1, true, copy);
+		}
+
+		ntt1(tmp11, cnt - 1, false, copy);
+		ntt1(tmp21, cnt - 1, false, copy);
+		for (i = 0; i < size; ++i)
+		{
+			tmp11[i] *= tmp21[i];
+			tmp11[i] %= NTT_PRIME1;
+		}
+		ntt1(tmp11, cnt - 1, true, copy);
+
+		delete[] copy;
+		if (cnt > 12)
+			for (i = 0; i < tmp.data.size(); ++i)tmp.data[i] = (int)(garner((long long)tmp11[i], (long long)tmp12[i], NTT_PRIME1, NTT_PRIME2) / size);
+		else
+			for (i = 0; i < tmp.data.size(); ++i)tmp.data[i] = (int)(tmp11[i] / size);
+	}
+	tmp.sign = sign ^ num.sign;
+	tmp.fix_carry();
+	return tmp;
+}
+
+LongInt& LongInt::operator*=(const LongInt& num)&
+{
+	unsigned long long size = 1;
+	int cnt = 0;
+	unsigned long long i, k = 0;
+	while (size < data.size() + num.data.size())
+	{
+		size <<= 1;
+		cnt += 1;
+	}
+	if ((unsigned long long)(cnt * 20) > num.data.size())
+	{
+		LongInt tmp(data.size() + num.data.size(), true);
+		num.multiply_nr(*this, tmp);
+		tmp.sign = sign ^ num.sign;
+		tmp.fix_carry();
+		*this = std::move(tmp);
+	}
+	else if ((unsigned long long)(cnt * 20) > data.size())
+	{
+		LongInt tmp(data.size() + num.data.size(), true);
+		multiply_nr(num, tmp);
+		tmp.sign = sign ^ num.sign;
+		tmp.fix_carry();
+		*this = std::move(tmp);
+	}
+	else
+	{
+		static Number_Theoretic_Transform<NTT_PRIME1> ntt1(NTT_ROOT1);
+		static Number_Theoretic_Transform<NTT_PRIME2> ntt2(NTT_ROOT2);
+		std::vector<unsigned long long> tmp11(size), tmp21(size);
+		for (i = 0; i < data.size(); ++i)tmp11[i] = data[i];
+		for (i = 0; i < num.data.size(); ++i)tmp21[i] = num.data[i];
+		unsigned long long* copy = new unsigned long long[size];
+		std::vector<unsigned long long> tmp12, tmp22;
+		if (cnt > 12)
+		{
+			tmp12 = tmp11;
+			tmp22 = tmp21;
+			ntt2(tmp12, cnt - 1, false, copy);
+			ntt2(tmp22, cnt - 1, false, copy);
+			for (i = 0; i < size; ++i)
+			{
+				tmp12[i] *= tmp22[i];
+				tmp12[i] %= NTT_PRIME2;
+			}
+			ntt2(tmp12, cnt - 1, true, copy);
+		}
+		ntt1(tmp11, cnt - 1, false, copy);
+		ntt1(tmp21, cnt - 1, false, copy);
+		for (i = 0; i < size; ++i)
+		{
+			tmp11[i] *= tmp21[i];
+			tmp11[i] %= NTT_PRIME1;
+		}
+		ntt1(tmp11, cnt - 1, true, copy);
+		delete[] copy;
+		this->data.resize(data.size() + num.data.size());
+		if (cnt > 12)
+			for (i = 0; i < data.size(); ++i)data[i] = (int)(garner((long long)tmp11[i], (long long)tmp12[i], NTT_PRIME1, NTT_PRIME2) / size);
+		else
+			for (i = 0; i < data.size(); ++i)data[i] = (int)(tmp11[i] / size);
+		sign ^= num.sign;
+		fix_carry();
+	}
+	return *this;
+}
+#else
 LongInt LongInt::operator*(const LongInt& num)const&
 {
 	unsigned long long size = 1, cnt = 0, i, k = 0;
@@ -1108,7 +1246,6 @@ LongInt LongInt::operator*(const LongInt& num)const&
 		for (i = 0; i < size; ++i)tmp1[i].times(tmp2[i]);
 		fft(tmp1, -1, copy);
 		delete[] copy;
-		tmp.data.resize(data.size() + num.data.size());
 		for (i = 0; i < data.size(); ++i)tmp.data[i] = (int)(tmp1[i].real / size + 0.5);
 	}
 	tmp.sign = sign ^ num.sign;
@@ -1159,7 +1296,7 @@ LongInt& LongInt::operator*=(const LongInt& num)&
 	}
 	return *this;
 }
-
+#endif
 LongInt LongInt::operator/(const LongInt& num)const&
 {
 	//ŽŸ
