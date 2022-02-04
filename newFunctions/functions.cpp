@@ -1087,6 +1087,82 @@ LongInt& LongInt::operator*=(const LongInt& num)&
 #define NTT_PRIME2 1811939329
 #define NTT_ROOT2 136
 
+void LongInt::karatsuba(std::vector<int>& num1, std::vector<int>& num2, std::vector<int>& result)
+{
+	if (num1.size() == 1)
+	{
+		int tmp = num1[0] * num2[0];
+		result.push_back(tmp % 10);
+		result.push_back(tmp / 10);
+		return;
+	}
+	std::vector<int> a, b, c, d;
+	std::vector<int> p, q, r;
+	std::size_t size = num1.size() >> 1, i;
+	for (i = 0; i < size; ++i)
+	{
+		b.push_back(num1[i]);
+	}
+	for (; i < num1.size(); ++i)
+	{
+		a.push_back(num1[i]);
+	}
+	if (num2.size() <= size)
+	{
+		d.resize(size);
+		for (i = 0; i < num2.size(); ++i)
+		{
+			d[i] = num2[i];
+		}
+		LongInt::karatsuba(a, d, q);
+		LongInt::karatsuba(b, d, r);
+		result = r;
+		result.resize(num1.size() + num2.size());
+		for (i = 0; i < q.size(); ++i)
+		{
+			result[i + size] += q[i];
+		}
+		while (result.size() >= 1 && !result.back())
+		{
+			result.pop_back();
+		}
+	}
+	else
+	{
+		for (i = 0; i < size; ++i)
+		{
+			d.push_back(num2[i]);
+		}
+		for (; i < num2.size(); ++i)
+		{
+			c.push_back(num2[i]);
+		}
+		LongInt::karatsuba(a, c, p);
+		LongInt::karatsuba(b, d, r);
+		for (i = 0; i < size; ++i)
+		{
+			a[i] += b[i];
+			c[i] += d[i];
+		}
+		LongInt::karatsuba(a, c, q);
+		for (i = 0; i < q.size(); ++i)
+		{
+			q[i] -= p[i] + r[i];
+		}
+		result = r;
+		result.resize(num1.size() * 2);
+		for (i = 0; i < q.size(); ++i)
+		{
+			result[i + size] += q[i];
+		}
+		size *= 2;
+		for (i = 0; i < p.size(); ++i)
+		{
+			result[i + size] += p[i];
+		}
+	}
+}
+
 LongInt LongInt::operator*(const LongInt& num)const&
 {
 	LongInt tmp(data.size() + num.data.size(), true);
@@ -1114,32 +1190,30 @@ LongInt LongInt::operator*(const LongInt& num)const&
 		std::vector<unsigned long long> tmp11(size), tmp21(size);
 		for (i = 0; i < data.size(); ++i)tmp11[i] = data[i];
 		for (i = 0; i < num.data.size(); ++i)tmp21[i] = num.data[i];
-		unsigned long long* copy = new unsigned long long[size];
 		std::vector<unsigned long long> tmp12, tmp22;
 		if (cnt > 12)
 		{
 			tmp12 = tmp11;
 			tmp22 = tmp21;
-			ntt2(tmp12, cnt - 1, false, copy);
-			ntt2(tmp22, cnt - 1, false, copy);
+			ntt2.trans_f(tmp12, cnt - 1, 0, size - 1);
+			ntt2.trans_f(tmp22, cnt - 1, 0, size - 1);
 			for (i = 0; i < size; ++i)
 			{
 				tmp12[i] *= tmp22[i];
 				tmp12[i] %= NTT_PRIME2;
 			}
-			ntt2(tmp12, cnt - 1, true, copy);
+			ntt2.itrans_t(tmp12, cnt - 1, 0, size - 1);
 		}
 
-		ntt1(tmp11, cnt - 1, false, copy);
-		ntt1(tmp21, cnt - 1, false, copy);
+		ntt1.trans_f(tmp11, cnt - 1, 0, size - 1);
+		ntt1.trans_f(tmp21, cnt - 1, 0, size - 1);
 		for (i = 0; i < size; ++i)
 		{
 			tmp11[i] *= tmp21[i];
 			tmp11[i] %= NTT_PRIME1;
 		}
-		ntt1(tmp11, cnt - 1, true, copy);
+		ntt1.itrans_t(tmp11, cnt - 1, 0, size - 1);
 
-		delete[] copy;
 		if (cnt > 12)
 			for (i = 0; i < tmp.data.size(); ++i)tmp.data[i] = (int)(garner((long long)tmp11[i], (long long)tmp12[i], NTT_PRIME1, NTT_PRIME2) / size);
 		else
@@ -1183,30 +1257,28 @@ LongInt& LongInt::operator*=(const LongInt& num)&
 		std::vector<unsigned long long> tmp11(size), tmp21(size);
 		for (i = 0; i < data.size(); ++i)tmp11[i] = data[i];
 		for (i = 0; i < num.data.size(); ++i)tmp21[i] = num.data[i];
-		unsigned long long* copy = new unsigned long long[size];
 		std::vector<unsigned long long> tmp12, tmp22;
 		if (cnt > 12)
 		{
 			tmp12 = tmp11;
 			tmp22 = tmp21;
-			ntt2(tmp12, cnt - 1, false, copy);
-			ntt2(tmp22, cnt - 1, false, copy);
+			ntt2.trans_f(tmp12, cnt - 1, 0, size - 1);
+			ntt2.trans_f(tmp22, cnt - 1, 0, size - 1);
 			for (i = 0; i < size; ++i)
 			{
 				tmp12[i] *= tmp22[i];
 				tmp12[i] %= NTT_PRIME2;
 			}
-			ntt2(tmp12, cnt - 1, true, copy);
+			ntt2.itrans_t(tmp12, cnt - 1, 0, size - 1);
 		}
-		ntt1(tmp11, cnt - 1, false, copy);
-		ntt1(tmp21, cnt - 1, false, copy);
+		ntt1.trans_f(tmp11, cnt - 1, 0, size - 1);
+		ntt1.trans_f(tmp21, cnt - 1, 0, size - 1);
 		for (i = 0; i < size; ++i)
 		{
 			tmp11[i] *= tmp21[i];
 			tmp11[i] %= NTT_PRIME1;
 		}
-		ntt1(tmp11, cnt - 1, true, copy);
-		delete[] copy;
+		ntt1.itrans_t(tmp11, cnt - 1, 0, size - 1);
 		this->data.resize(data.size() + num.data.size());
 		if (cnt > 12)
 			for (i = 0; i < data.size(); ++i)data[i] = (int)(garner((long long)tmp11[i], (long long)tmp12[i], NTT_PRIME1, NTT_PRIME2) / size);

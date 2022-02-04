@@ -2,10 +2,10 @@
 
 void start()
 {
-	a = clock();
+	start_time = clock();
 }
 void end()
 {
-	b = clock();
-	etime += b - a;
+	end_time = clock();
+	etime += end_time - start_time;
 }

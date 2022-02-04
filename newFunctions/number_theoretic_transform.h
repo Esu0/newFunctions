@@ -47,8 +47,19 @@ public:
 			inv_Root[i] = mpow(inv_root_n, Times >> (i + 1), Div);
 		}
 	}
+
+	unsigned int getRoot(unsigned int index)const&
+	{
+		return Root[index];
+	}
+
+	unsigned int getiRoot(unsigned int index)const&
+	{
+		return inv_Root[index];
+	}
+
 	//vec‚Ì—v‘f”‚ª2^n‚Ì‚Æ‚«m = n - 1
-	void operator()(std::vector<ull>& vec, int m, bool inv, ull* copy, ull begin = 0, ull e = 1)
+	void operator()(std::vector<ull>& vec, int m, bool inv, ull* copy, ull begin = 0, ull e = 1)const&
 	{
 		static ull i, j, k;
 		if (m < 0)return;
@@ -79,6 +90,61 @@ public:
 			j += e << 1;
 		}
 	}
+
+	//“Y‚¦š‚ÍƒrƒbƒgƒŠƒo[ƒX‚³‚ê‚Ä•Ô‚³‚ê‚é
+	//ü”g”ŠÔˆø‚«Œ^FMT
+	void trans_f(std::vector<ull>& vec, int m, ull from, ull to)const&
+	{
+		ull tmp;
+		if (m <= 0)
+		{
+			tmp = vec[from];
+			vec[from] = (vec[from] + vec[to]) % Div;
+			vec[to] = (tmp + Div - vec[to]) % Div;
+			return;
+		}
+		ull mid = (to - from + 1) / 2;
+		ull w = 1;
+		for (ull i = from + mid; i <= to; ++i)
+		{
+			tmp = vec[i - mid];
+			vec[i - mid] = (tmp + vec[i]) % Div;
+			vec[i] = ((tmp + Div - vec[i]) * w) % Div;
+			w *= Root[m];
+			w %= Div;
+		}
+		trans_f(vec, m - 1, from, from + mid - 1);
+		trans_f(vec, m - 1, from + mid, to);
+	}
+
+	//ŠÔŠÔˆø‚«Œ^‹tFMT
+	void itrans_t(std::vector<ull>& vec, int m, ull from, ull to)const&
+	{
+		ull tmp;
+		if (m <= 0)
+		{
+			tmp = vec[from];
+			vec[from] = (vec[from] + vec[to]) % Div;
+			vec[to] = (tmp + Div - vec[to]) % Div;
+			return;
+		}
+		ull mid = (to - from + 1) / 2;
+		itrans_t(vec, m - 1, from, from + mid - 1);
+		itrans_t(vec, m - 1, from + mid, to);
+		ull w = 1;
+		for (ull i = from + mid; i <= to; ++i)
+		{
+			tmp = vec[i - mid];
+			vec[i] *= w;
+			vec[i] %= Div;
+			vec[i - mid] = (tmp + vec[i]) % Div;
+			vec[i] = (tmp + Div - vec[i]) % Div;
+			w *= inv_Root[m];
+			w %= Div;
+		}
+	}
+
+	
 };
 
 using NTT = Number_Theoretic_Transform<>;

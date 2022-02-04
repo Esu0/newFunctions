@@ -16,6 +16,14 @@
 
 namespace MyFunctions1
 {
+	template<class T>
+	void swap(T& a, T& b)
+	{
+		T tmp = std::move(a);
+		a = std::move(b);
+		b = std::move(tmp);
+	}
+
 	//多倍長整数
 	class LongInt
 	{
@@ -24,14 +32,17 @@ namespace MyFunctions1
 		using byte = unsigned char;
 
 		bool sign = 0;//負のとき1
+
 #if VERSION == 1
 		std::size_t digit_num = 1;//桁数
 #endif
+
 #if VERSION == 1
 		std::vector<byte> data;//表記と逆順に並んでいる
 #elif VERSION == 2
 		std::vector<int> data;
 #endif
+
 		void addabs(const LongInt&, LongInt&)const&;
 		void subtractabs(const LongInt&, LongInt&)const&;//*this-num2>=0の前提
 		bool cmpabs(const LongInt&)const&;
@@ -91,7 +102,9 @@ namespace MyFunctions1
 			}
 		};
 #endif
+
 	private:
+
 #if VERSION == 1
 		void check_dnum(std::size_t init)
 		{
@@ -171,7 +184,9 @@ namespace MyFunctions1
 			del_zero();
 		}
 #endif
+
 	public:
+
 #if VERSION == 1
 		void multiplyabs(long long, LongInt&)const&;
 #elif VERSION == 2
@@ -237,29 +252,20 @@ namespace MyFunctions1
 				zetai.times(zeta);
 			}
 		}
-		/*
-		static void ntt(
-			std::vector<unsigned long long>& vec, 
-			int inv, 
-			unsigned long long* copy, 
-			unsigned long long begin = 0, 
-			unsigned long long n = 1
-		)
-		{
-			static unsigned long long i, j, k;
-			if (vec.size() == n)return;
-			ntt(vec, inv, copy, begin, n << 1);
-			ntt(vec, inv, copy, begin + n, n << 1);
 
-		}
-		*/
+		static void karatsuba(std::vector<int>&, std::vector<int>&, std::vector<int>&);
 #endif
+
 		LongInt()noexcept;//デフォルトコンストラクタ
 		LongInt(int);//コンストラクタint
 		LongInt(std::size_t, bool);
+
 #if VERSION == 1
+
 		LongInt(const std::string&);//コンストラクタstring
+
 #endif
+
 		LongInt(const char*);//コンストラクタchar*
 		LongInt(const LongInt&) = default;//コピーコンストラクタ
 		LongInt(LongInt&&) = default;//ムーブコンストラクタ
@@ -268,6 +274,7 @@ namespace MyFunctions1
 
 		LongInt& operator=(const LongInt&)& = default;
 		LongInt& operator=(LongInt&&)& = default;
+
 #if VERSION == 1
 		LongInt& operator=(int)&;
 #endif

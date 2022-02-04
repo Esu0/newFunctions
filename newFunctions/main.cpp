@@ -3,7 +3,7 @@
 #include<chrono>
 #include"number_theoretic_transform.h"
 
-//#define DEBUG
+#define DEBUG
 
 #ifndef DEBUG
 #define TIME
@@ -31,7 +31,7 @@ int main()
 	b.random(10);
 #else
 	a.random(1000000);
-	b.random(5000);
+	b.random(1000000);
 #endif
 
 	//cout << a << " / " << b << " = " << a / b << endl;
@@ -73,8 +73,6 @@ int main()
 	cout << a << " * " << b << " = " << a * b << " = ";
 	a *= b;
 	cout << a << endl;
-	//x.outhex();
-	cout << endl;
 #endif
 
 #ifdef TIME
