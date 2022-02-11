@@ -1,6 +1,7 @@
 #pragma once
 #include<vector>
 #include"modulo.h"
+
 template<unsigned int Div = 998244353, unsigned int Primitive_root = 3>
 class Number_Theoretic_Transform
 {

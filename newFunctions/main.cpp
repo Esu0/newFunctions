@@ -1,9 +1,10 @@
 #include"functions.h"
 #include"LongIntBin.h"
+#include"time_debug.h"
 #include<chrono>
 #include"number_theoretic_transform.h"
 
-#define DEBUG
+//#define DEBUG
 
 #ifndef DEBUG
 #define TIME
@@ -26,12 +27,15 @@ int main()
 	std::uniform_int_distribution<> rand(10000000, 99999999);
 
 	int ia = 3313822, ib = -10002030;
+	int digit_num = 1000000;
 #if defined(DEBUG)
-	a.random(10);
-	b.random(10);
+	//a.random(2);
+	//b.random(2);
+	a = "12345678";
+	b = "98765432";
 #else
-	a.random(1000000);
-	b.random(1000000);
+	a.random(digit_num / LINT_BASE_DNUM);
+	b.random(digit_num / LINT_BASE_DNUM);
 #endif
 
 	//cout << a << " / " << b << " = " << a / b << endl;
@@ -76,8 +80,6 @@ int main()
 #endif
 
 #ifdef TIME
-	LongInt::mycomplex za(1, 1.2), zb(1.01, 1.03), zc;
-	std::complex<double> za2(1, 1.2), zb2(1.01, 1.03), zc2;
 	start = system_clock::now();
 
 	//c = a + b;

@@ -6,7 +6,9 @@
 #include<random>
 #include<complex>
 #include<cmath>
-#include"time_debug.h"
+#include<sstream>
+#include<iomanip>
+#include"number_theoretic_transform.h"
 
 #define VERSION 2
 #define PI 3.141592653589793238462643383279502884197169399375
@@ -25,103 +27,25 @@ namespace MyFunctions1
 	}
 
 	//多倍長整数
+#define LINT_BASE 100000
+#define LINT_BASE_DNUM 5
 	class LongInt
 	{
-	private:
-		
-		using byte = unsigned char;
 
+	private:
+
+		template<class T>
+		void swap(T& a, T& b)
+		{
+			T tmp = std::move(a);
+			a = std::move(b);
+			b = std::move(tmp);
+		}
+
+		std::vector<int> data;
 		bool sign = 0;//負のとき1
 
-#if VERSION == 1
-		std::size_t digit_num = 1;//桁数
-#endif
-
-#if VERSION == 1
-		std::vector<byte> data;//表記と逆順に並んでいる
-#elif VERSION == 2
-		std::vector<int> data;
-#endif
-
-		void addabs(const LongInt&, LongInt&)const&;
-		void subtractabs(const LongInt&, LongInt&)const&;//*this-num2>=0の前提
-		bool cmpabs(const LongInt&)const&;
-
-#if VERSION == 2
-	public:
-		class mycomplex
-		{
-		public:
-			double real = 0.0;
-			double imag = 0.0;
-
-			mycomplex()noexcept
-			{}
-
-			mycomplex(double r, double i)noexcept :real(r), imag(i)
-			{}
-
-			mycomplex(double theta):real(std::cos(theta)), imag(std::sin(theta))
-			{}
-			
-			mycomplex(const mycomplex&) = default;
-			mycomplex(mycomplex&&) = default;
-			virtual ~mycomplex()noexcept = default;
-
-			mycomplex& operator=(const mycomplex& z)& noexcept
-			{
-				real = z.real;
-				imag = z.imag;
-				return *this;
-			}
-			mycomplex& operator=(mycomplex&&)& = default;
-
-			void times(const mycomplex& z)&
-			{
-				double tmp = real;
-				real *= z.real;
-				real -= imag * z.imag;
-				imag *= z.real;
-				imag += z.imag * tmp;
-			}
-			
-			mycomplex multiply(const mycomplex& z)const&
-			{
-				return mycomplex(real * z.real - imag * z.imag, real * z.imag + z.real * imag);
-			}
-
-			void add(const mycomplex& z1, const mycomplex& z2)&
-			{
-				real = z1.real + z2.real;
-				imag = z1.imag + z2.imag;
-			}
-			void add(const mycomplex& z)&
-			{
-				real += z.real;
-				imag += z.imag;
-			}
-		};
-#endif
-
-	private:
-
-#if VERSION == 1
-		void check_dnum(std::size_t init)
-		{
-			for (std::size_t i = init; i > 0; --i)
-			{
-				if (data[i] != 0)
-				{
-					digit_num = i + 1ull;
-					return;
-				}
-			}
-			digit_num = 1ull;
-		}
-#endif
-
-#if VERSION == 2
-		void del_zero()& noexcept
+		void del_zero() & noexcept
 		{
 			if (data.empty())
 			{
@@ -148,25 +72,25 @@ namespace MyFunctions1
 				carry = 0;
 				if (data[i] > 0)
 				{
-					carry = data[i] / 10;
-					data[i] %= 10;
+					carry = data[i] / LINT_BASE;
+					data[i] %= LINT_BASE;
 				}
 				else if (data[i] < 0)
 				{
-					carry = (data[i] + 1) / 10 - 1;
-					data[i] -= carry * 10;
+					carry = (data[i] + 1) / LINT_BASE - 1;
+					data[i] -= carry * LINT_BASE;
 				}
 			}
 
 			while (carry > 0)
 			{
-				data.push_back(carry % 10);
-				carry /= 10;
+				data.push_back(carry % LINT_BASE);
+				carry /= LINT_BASE;
 			}
-			while (carry < -9)
+			while (carry <= -LINT_BASE)
 			{
-				data.push_back((carry + 1) % 10 + 9);
-				carry = (carry + 1) / 10 - 1;
+				data.push_back((carry + 1) % LINT_BASE + LINT_BASE - 1);
+				carry = (carry + 1) / LINT_BASE - 1;
 			}
 			if (carry < 0)data.push_back(carry);
 			if (data.back() < 0)
@@ -175,96 +99,20 @@ namespace MyFunctions1
 				carry = 1;
 				for (std::size_t i = 0; i < data.size(); ++i)
 				{
-					data[i] = 9 - data[i] + carry;
-					carry = data[i] / 10;
-					data[i] %= 10;
+					data[i] = LINT_BASE - 1 - data[i] + carry;
+					carry = data[i] / LINT_BASE;
+					data[i] %= LINT_BASE;
 				}
-				data.back() %= 10;
+				data.back() %= LINT_BASE;
 			}
 			del_zero();
 		}
-#endif
 
 	public:
-
-#if VERSION == 1
-		void multiplyabs(long long, LongInt&)const&;
-#elif VERSION == 2
-		void multiply_nr(const LongInt& num, LongInt& result)const&
-		{
-			for (unsigned long long i = 0; i < data.size(); ++i)
-			{
-				for (unsigned long long j = 0; j < num.data.size(); ++j)
-				{
-					result.data[i + j] += data[i] * num.data[j];
-				}
-			}
-		}
-
-		static void fft(std::vector<mycomplex>& vec, int inv, mycomplex* copy, unsigned long long begin = 0, unsigned long long n = 1)
-		{
-			static unsigned long long i, j, l;
-			if (vec.size() == n)return;
-			fft(vec, inv, copy, begin, n << 1);
-			fft(vec, inv, copy, begin + n, n << 1);
-			mycomplex k(1.0, 0.0), zeta(inv * 2 * PI / (vec.size() / n));
-			for (i = begin; i < vec.size(); i += n)
-			{
-				copy[i].real = vec[i].real;
-				copy[i].imag = vec[i].imag;
-			}
-			j = begin;
-			for (i = begin; j < vec.size(); i += n)
-			{
-				l = j + n;
-				vec[i].real = copy[j].real + k.real * copy[l].real - k.imag * copy[l].imag;
-				vec[i].imag = copy[j].imag + k.real * copy[l].imag + k.imag * copy[l].real;
-				k.times(zeta);
-				j += n << 1;
-			}
-			for (j = begin; i < vec.size(); i += n)
-			{
-				l = j + n;
-				vec[i].real = copy[j].real + k.real * copy[l].real - k.imag * copy[l].imag;
-				vec[i].imag = copy[j].imag + k.real * copy[l].imag + k.imag * copy[l].real;
-				k.times(zeta);
-				j += n << 1;
-			}
-		}
-		static void fft_nr(std::vector<mycomplex>& vec, int inv, mycomplex* copy, unsigned long long begin = 0, unsigned long long n = 1)
-		{
-			for (unsigned long long i = begin; i < vec.size(); i += n)
-			{
-				copy[i] = vec[i];
-			}
-			mycomplex zetaij(1.0, 0.0), zetai(1.0, 0.0), zeta(inv * 2.0 * PI / (vec.size() / n));
-			for (unsigned long long i = begin; i < vec.size(); i += n)
-			{
-				vec[i].real = 0;
-				vec[i].imag = 0;
-				zetaij.real = 1.0;
-				zetaij.imag = 0.0;
-				for (unsigned long long j = begin; j < vec.size(); j += n)
-				{
-					vec[i].add(zetaij.multiply(copy[j]));
-					zetaij.times(zetai);
-				}
-				zetai.times(zeta);
-			}
-		}
-
-		static void karatsuba(std::vector<int>&, std::vector<int>&, std::vector<int>&);
-#endif
 
 		LongInt()noexcept;//デフォルトコンストラクタ
 		LongInt(int);//コンストラクタint
 		LongInt(std::size_t, bool);
-
-#if VERSION == 1
-
-		LongInt(const std::string&);//コンストラクタstring
-
-#endif
 
 		LongInt(const char*);//コンストラクタchar*
 		LongInt(const LongInt&) = default;//コピーコンストラクタ
@@ -275,13 +123,12 @@ namespace MyFunctions1
 		LongInt& operator=(const LongInt&)& = default;
 		LongInt& operator=(LongInt&&)& = default;
 
-#if VERSION == 1
-		LongInt& operator=(int)&;
-#endif
 		bool operator<(const LongInt&)const& noexcept;
 		bool operator>(const LongInt&)const& noexcept;
 		bool operator<=(const LongInt&)const& noexcept;
 		bool operator>=(const LongInt&)const& noexcept;
+		bool operator==(const LongInt&)const& noexcept;
+		bool operator!=(const LongInt&)const& noexcept;
 
 		LongInt& operator++()&;
 		LongInt operator++(int)&;
@@ -291,52 +138,52 @@ namespace MyFunctions1
 		LongInt operator+()const&;
 		LongInt operator-()const&;
 
-#if VERSION == 1
-		LongInt operator+(const LongInt&)const&;//加算
-		LongInt operator-(const LongInt&)const&;//減算
-#elif VERSION == 2
 		LongInt operator+(LongInt)const&;
 		LongInt operator-(LongInt)const&;
-#endif
-		
+
+		void multiply_nr(const std::vector<int>& num, std::vector<unsigned long long>& result)const&
+		{
+			for (unsigned long long i = 0; i < data.size(); ++i)
+			{
+				for (unsigned long long j = 0; j < num.size(); ++j)
+				{
+					result[i + j] += (unsigned long long)data[i] * (unsigned long long)num[j];
+				}
+			}
+		}
+
+		/*
+		static LongInt mul(const LongInt& num1, const LongInt& num2)
+		{
+			LongInt result(num1.data.size() + num2.data.size(), true);
+			num1.multiply_nr(num2, result);
+			result.sign = num1.sign ^ num2.sign;
+			result.fix_carry();
+			return result;
+		}
+		*/
 		LongInt operator*(const LongInt&)const&;//乗算
 		LongInt operator/(const LongInt&)const&;//除算
 		LongInt operator%(const LongInt&)const&;//モジュル演算
 
-#if VERSION == 1
 		LongInt& operator+=(const LongInt&)&;
 		LongInt& operator-=(const LongInt&)&;
 		LongInt& operator*=(const LongInt&)&;
-#elif VERSION == 2
-		LongInt& operator+=(const LongInt&)&;
-		LongInt& operator-=(const LongInt&)&;
-		LongInt& operator*=(const LongInt&)&;
-#endif
-#if VERSION == 1
-		byte operator[](std::size_t)const& noexcept;
-#elif VERSION == 2
-		int operator[](std::size_t)const& noexcept;
-#endif
 
-#if VERSION == 1
-		std::size_t getdnum()const&
-		{
-			return digit_num;
-		}
-#endif
+		int operator[](std::size_t)const& noexcept;
 
 		void random(std::size_t size)&
 		{
 			std::size_t i;
 			static std::random_device seed;
 			static std::mt19937_64 mt(seed());
-			static std::uniform_int_distribution<> rand(0, 9);
+			static std::uniform_int_distribution<> rand(0, LINT_BASE - 1);
 			data.resize(size);
 			for (i = 0; i < size; ++i)
 			{
 				data[i] = rand(mt);
 			}
-			sign = rand(mt) <= 4;
+			sign = rand(mt) <= LINT_BASE / 2 - 1;
 			del_zero();
 		}
 
@@ -351,7 +198,6 @@ namespace MyFunctions1
 		}
 
 		void tostring(std::string&)const&;
-
 	};
 }
 
